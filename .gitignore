@@ -1,5 +1,5 @@
 # Project Specific
-data/*
+/data/*
 !/data/.gitkeep
 
 # Byte-compiled / optimized / DLL files
@@ -130,4 +130,7 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
-.pyre/
+.pyre
+
+# Py Charm
+.idea/

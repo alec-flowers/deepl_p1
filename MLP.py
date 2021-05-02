@@ -4,11 +4,11 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 import torch.nn as nn
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = 'cpu'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = 'cpu'
 
 
-data = generate_pair_sets(100)
+data = generate_pair_sets(1000)
 train_data = data[0]
 train_labels = data[1]
 train_classes = data[2]
@@ -22,7 +22,7 @@ print(f"{train_data.size()=}")
 input_size = 2 * 14 * 14
 lr = 1.0e-4
 epochs = 50
-batch_size = 10
+batch_size = 20
 standardize = True
 
 

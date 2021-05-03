@@ -1,12 +1,9 @@
-from dlc_practical_prologue import *
 from torchvision import datasets
 from torch.utils.data import DataLoader, Dataset
 import torch
 import torch.nn as nn
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = 'cpu'
-
+from dlc_practical_prologue import *
 
 data = generate_pair_sets(1000)
 train_data = data[0]
@@ -17,13 +14,15 @@ test_data = data[3]
 test_labels = data[4]
 test_classes = data[5]
 
-print(f"{train_data.size()=}")
-
-input_size = 2 * 14 * 14
+num_labels = 10
 lr = 1.0e-4
-epochs = 20
-batch_size = 20
+epochs = 10
+batch_size = 10
 standardize = True
+
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = 'cpu'
 
 
 class CustomDataset(Dataset):
@@ -49,34 +48,63 @@ test_dataset = CustomDataset(test_data, test_labels, test_classes)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 
-class NeuralNet(nn.Module):
-    # Fully connected neural network with arbitrary hidden layers
-    def __init__(self, input_size, hidden_sizes, output_size=1):
-        super(NeuralNet, self).__init__()
+input_size = 14 * 14
+hidden_sizes2 = [80, 80, 20]
+hidden_sizes = [600, 600, 200]
+
+
+class NeuralNetCalssifierComparer(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self, input_size, hidden_sizes,
+                 hiddens_size2, num_labels=10, output_size=1):
+        super(NeuralNetCalssifierComparer, self).__init__()
         self.input_size = input_size
-        sizes = [input_size] + hidden_sizes + [output_size]
+        sizes = [input_size] + hidden_sizes + [num_labels]
         self.layers = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
+        # self.net = ParallelModule(nn.Sequential(self.layers, nn.Softmax()),
+        #                           nn.Sequential(self.layers, nn.Softmax()))
+        sizes2 = [2 * num_labels] + hidden_sizes2 + [output_size]
+        self.layers2 = nn.ModuleList(
+            [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes2, sizes2[1:])])
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax(dim=0)
 
-    def forward(self, x):
+    def classify(self, x):
         for i, layer in enumerate(self.layers):
+            x = layer(x)
+            if i + 1 < len(self.layers):
+                x = self.relu(x)
+        out = self.softmax(x)
+        return out
+
+    def compare(self, x):
+        for i, layer in enumerate(self.layers2):
             x = layer(x)
             if i + 1 < len(self.layers):
                 x = self.relu(x)
         out = self.sigmoid(x)
         return out
 
+    def forward(self, x):
+        # x : 2, 14*14
+        labels1 = self.classify(x[:, 0, ...])
+        labels2 = self.classify(x[:, 1, ...])
+        labels = torch.cat((labels1,
+                            labels2), 1)
+        out = self.compare(labels)
+        return out
 
-# Constructing the MLP NN
-hidden_sizes = [600, 600, 200]
-model = NeuralNet(input_size, hidden_sizes).to(device)
 
+model_new = NeuralNetCalssifierComparer(
+    input_size, hidden_sizes, hidden_sizes2)
 
 # Loss and optimizer
 criterion = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model_new.parameters(), lr=lr)
+
 
 n_total_steps = len(train_loader)
 for epoch in range(epochs):
@@ -84,11 +112,11 @@ for epoch in range(epochs):
 
         # origin shape: [n, 2, 14, 14]
         # resized: [n, 2*14*14]
-        inps = inps.reshape(-1, 2*14*14).to(device).float()
+        inps = inps.reshape(-1, 2, 14*14).to(device).float()
         tgts = tgts.to(device).reshape(-1, 1).float()
 
         # Forward pass
-        outputs = model(inps)
+        outputs = model_new(inps)
         loss = criterion(outputs, tgts)
 
         # Backward and optimize
@@ -96,7 +124,7 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
 
-        if (i+1) % 100 == 0:
+        if (i+1) % 10 == 0:
             print(f"Epoch [{epoch+1}/{epochs}], Step [{i+1}/{n_total_steps}]"
                   + f", Loss: {loss.item():.4f}")
 
@@ -105,9 +133,9 @@ with torch.no_grad():
     n_correct = 0
     n_samples = 0
     for i, (inps, [tgts, clas]) in enumerate(test_loader):
-        inps = inps.reshape(-1, 2*14*14).to(device).float()
+        inps = inps.reshape(-1, 2, 14*14).to(device).float()
         tgts = tgts.to(device).reshape(-1, 1).float()
-        predicted = model(inps)
+        predicted = model_new(inps)
         predicted_cls = predicted.round()
         n_samples += tgts.size(0)
         n_correct += (predicted_cls == tgts).sum().item()

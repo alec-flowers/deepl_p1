@@ -1,6 +1,7 @@
 # Project Specific
 /data/*
 !/data/.gitkeep
+/runs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

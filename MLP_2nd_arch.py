@@ -15,7 +15,7 @@ test_labels = data[4]
 test_classes = data[5]
 
 num_labels = 10
-lr = 1.0e-4
+lr = 1.0e-5
 epochs = 10
 batch_size = 10
 standardize = True
@@ -63,8 +63,6 @@ class NeuralNetCalssifierComparer(nn.Module):
         sizes = [input_size] + hidden_sizes + [num_labels]
         self.layers = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
-        # self.net = ParallelModule(nn.Sequential(self.layers, nn.Softmax()),
-        #                           nn.Sequential(self.layers, nn.Softmax()))
         sizes2 = [2 * num_labels] + hidden_sizes2 + [output_size]
         self.layers2 = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes2, sizes2[1:])])
@@ -77,10 +75,12 @@ class NeuralNetCalssifierComparer(nn.Module):
             x = layer(x)
             if i + 1 < len(self.layers):
                 x = self.relu(x)
-        out = self.softmax(x)
+        # out = self.softmax(x)
+        out = x
         return out
 
     def compare(self, x):
+        # x : n, 20
         for i, layer in enumerate(self.layers2):
             x = layer(x)
             if i + 1 < len(self.layers):
@@ -89,13 +89,13 @@ class NeuralNetCalssifierComparer(nn.Module):
         return out
 
     def forward(self, x):
-        # x : 2, 14*14
+        # x : n, 2, 14, 14
         labels1 = self.classify(x[:, 0, ...])
         labels2 = self.classify(x[:, 1, ...])
         labels = torch.cat((labels1,
                             labels2), 1)
-        out = self.compare(labels)
-        return out
+        comparison_out = self.compare(labels)
+        return comparison_out
 
 
 model_new = NeuralNetCalssifierComparer(

@@ -1,6 +1,15 @@
 import torch
 
 
+class DummySummaryWriter:
+    def __init__(*args, **kwargs):
+        pass
+    def __call__(self, *args, **kwargs):
+        return self
+    def __getattr__(self, *args, **kwargs):
+        return self
+
+
 def nb_errors(output, actual):
     if output.size(1) > 1:
         predict = output.argmax(1)

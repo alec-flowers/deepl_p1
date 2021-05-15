@@ -16,10 +16,13 @@ class BaseRunner(abc.ABC):
                  name,
                  writer_bool=False):
 
+        self.device = torch.device(
+            'cuda' if torch.cuda.is_available() else 'cpu')
         self.name = name
         self.model = model
+        self.model.to(self.device)
         self.batch_size = batch_size
-        self.trainloader, self.testloader = load_data(self.batch_size)
+        self.train_loader, self.test_loader = load_data(self.batch_size)
         self.criterion = criterion
         self.optimizer = optimizer
         self.epochs = epochs
@@ -28,9 +31,7 @@ class BaseRunner(abc.ABC):
             self.writer = SummaryWriter('runs/'+self.name)
         else:
             self.writer = DummySummaryWriter()
-        #self.writer.add_graph(self.model)
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.train_loss = []
         self.train_acc = []
         self.test_loss = []
@@ -41,13 +42,14 @@ class BaseRunner(abc.ABC):
             self.train()
             self.test()
             self.current_epoch += 1
+        self.graph_plot()
 
     def train(self):
         self.model.train()
         running_loss = 0
         errors = 0
         n_samples = 0
-        for i, (inps, [tgts, clas]) in enumerate(self.trainloader):
+        for i, (inps, [tgts, clas]) in enumerate(self.train_loader):
             # origin shape: [n, 2, 14, 14]
             # resized: [n, 2*14*14]
             inps, tgts = self.rescale_inputs(inps, tgts)
@@ -61,20 +63,40 @@ class BaseRunner(abc.ABC):
             loss.backward()
             self.optimizer.step()
 
-            #Save Info
+            # Save Info
             running_loss += loss.item()
             errors += nb_errors(outputs, tgts)
             n_samples += len(tgts)
 
-        a = len(self.trainloader)
-        self.train_loss.append(running_loss/len(self.trainloader))
+        a = len(self.train_loader)
+        self.train_loss.append(running_loss/len(self.train_loader))
         self.train_acc.append(1 - (errors/n_samples))
         if self.current_epoch % 10 == 0:
-            print(f'Epoch: {self.current_epoch}  Loss: {self.train_loss[self.current_epoch]:.04f}  Accuracy: {self.train_acc[self.current_epoch]:.04f}')
+            print(
+                f'Epoch: {self.current_epoch}  Loss: {self.train_loss[self.current_epoch]:.04f}  Accuracy: {self.train_acc[self.current_epoch]:.04f}')
 
-        self.writer.add_scalar("Loss/Train", self.train_loss[self.current_epoch], self.current_epoch)
-        self.writer.add_scalar("Accuracy/Train", self.train_acc[self.current_epoch], self.current_epoch)
+        self.writer.add_scalar("Loss/Train",
+                               self.train_loss[self.current_epoch],
+                               self.current_epoch)
+        self.writer.add_scalar("Accuracy/Train",
+                               self.train_acc[self.current_epoch],
+                               self.current_epoch)
         self.writer.flush()
+
+    def graph_plot(self):
+        examples = iter(self.train_loader)
+        example_data, example_targets = examples.next()
+
+        # works with plain MLP:
+        # self.writer.add_graph(
+        #     self.model,
+        #     example_data.reshape(-1, 2, 14, 14).to(self.device))
+
+        # works with classifycompare NN with MLP2runner
+        print(self.model)
+        self.writer.add_graph(
+            self.model,
+            example_data.reshape(-1, 2, 14 * 14).to(self.device))
 
     def test(self):
         self.model.eval()
@@ -82,24 +104,29 @@ class BaseRunner(abc.ABC):
         errors = 0
         n_samples = 0
         with torch.no_grad():
-            for i, (inps, [tgts, clas]) in enumerate(self.testloader):
+            for i, (inps, [tgts, clas]) in enumerate(self.test_loader):
                 inps, tgts = self.rescale_inputs(inps, tgts)
                 outputs = self.model(inps)
                 loss = self.criterion(outputs, tgts)
 
-                #Save Info
+                # Save Info
                 running_loss += loss.item()
                 errors += nb_errors(outputs, tgts)
                 n_samples += len(tgts)
 
-            self.test_loss.append(running_loss/len(self.testloader))
+            self.test_loss.append(running_loss/len(self.test_loader))
             self.test_acc.append(1 - (errors/n_samples))
 
             if self.current_epoch % 10 == 0:
-                print(f'    TRAIN Loss: {self.test_loss[self.current_epoch]:.04f}  Accuracy: {self.test_acc[self.current_epoch]:.04f}')
+                print(
+                    f'    TRAIN Loss: {self.test_loss[self.current_epoch]:.04f}  Accuracy: {self.test_acc[self.current_epoch]:.04f}')
 
-            self.writer.add_scalar("Loss/Test", self.test_loss[self.current_epoch], self.current_epoch)
-            self.writer.add_scalar("Accuracy/Test", self.test_acc[self.current_epoch], self.current_epoch)
+            self.writer.add_scalar("Loss/Test",
+                                   self.test_loss[self.current_epoch],
+                                   self.current_epoch)
+            self.writer.add_scalar("Accuracy/Test",
+                                   self.test_acc[self.current_epoch],
+                                   self.current_epoch)
             self.writer.flush()
 
     @abc.abstractmethod
@@ -108,7 +135,8 @@ class BaseRunner(abc.ABC):
 
 
 class ConvRunner(BaseRunner):
-    def __init__(self, model, criterion, optimizer, epochs, batch_size, name, writer_bool=False):
+    def __init__(self, model, criterion, optimizer, epochs,
+                 batch_size, name, writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -122,7 +150,8 @@ class ConvRunner(BaseRunner):
 
 
 class MLPRunner(BaseRunner):
-    def __init__(self, model, criterion, optimizer, epochs, batch_size, name, writer_bool=False):
+    def __init__(self, model, criterion, optimizer,
+                 epochs, batch_size, name, writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -138,7 +167,8 @@ class MLPRunner(BaseRunner):
 
 
 class MLP2Runner(BaseRunner):
-    def __init__(self, model, criterion, optimizer, epochs, batch_size, name, writer_bool=False):
+    def __init__(self, model, criterion, optimizer,
+                 epochs, batch_size, name, writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,

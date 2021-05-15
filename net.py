@@ -11,14 +11,15 @@ class NeuralNet(nn.Module):
         sizes = [input_size] + hidden_sizes + [output_size]
         self.layers = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
-        self.relu = nn.ReLU()
+        self.relus = nn.ModuleList(
+            [nn.ReLU() for _ in range(len(self.layers))])
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        for i, layer in enumerate(self.layers):
+        for i, (layer, relu) in enumerate(zip(self.layers, self.relus)):
             x = layer(x)
             if i + 1 < len(self.layers):
-                x = self.relu(x)
+                x = relu(x)
         out = self.sigmoid(x)
         return out
 
@@ -49,34 +50,38 @@ class NeuralNetCalssifierComparer(nn.Module):
     # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer
     def __init__(self, input_size, hidden_sizes,
-                 hidden_size2, num_labels=10, output_size=1):
+                 hidden_sizes2, num_labels=10, output_size=1):
         super(NeuralNetCalssifierComparer, self).__init__()
         self.input_size = input_size
         sizes = [input_size] + hidden_sizes + [num_labels]
-        self.layers = nn.ModuleList(
+        self.layers_classifier = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
-        # self.net = ParallelModule(nn.Sequential(self.layers, nn.Softmax()),
-        #                           nn.Sequential(self.layers, nn.Softmax()))
-        sizes2 = [2 * num_labels] + hidden_size2 + [output_size]
-        self.layers2 = nn.ModuleList(
+        self.relus_classifier = nn.ModuleList(
+            [nn.ReLU() for _ in range(len(self.layers_classifier))])
+        sizes2 = [2 * num_labels] + hidden_sizes2 + [output_size]
+        self.layers_comparer = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes2, sizes2[1:])])
-        self.relu = nn.ReLU()
+        self.relus_comparer = nn.ModuleList(
+            [nn.ReLU() for _ in range(len(self.layers_comparer))])
         self.sigmoid = nn.Sigmoid()
-        self.softmax = nn.Softmax(dim=0)
+        # self.softmax = nn.Softmax(dim=0)
 
     def classify(self, x):
-        for i, layer in enumerate(self.layers):
+        for i, (layer,relu) in enumerate(zip(self.layers_classifier,
+                                             self.relus_classifier)):
             x = layer(x)
-            if i + 1 < len(self.layers):
-                x = self.relu(x)
-        out = self.softmax(x)
+            if i + 1 < len(self.layers_classifier):
+                x = relu(x)
+        out = x
+        # out = self.softmax(x)
         return out
 
     def compare(self, x):
-        for i, layer in enumerate(self.layers2):
+        for i, (layer, relu) in enumerate(zip(self.layers_comparer,
+                                              self.relus_classifier)):
             x = layer(x)
-            if i + 1 < len(self.layers):
-                x = self.relu(x)
+            if i + 1 < len(self.layers_comparer):
+                x = relu(x)
         out = self.sigmoid(x)
         return out
 

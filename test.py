@@ -4,18 +4,23 @@ from runner import *
 from net import NeuralNet, Net, NeuralNetCalssifierComparer
 
 test_rounds = 1
-input_size = 2 * 14 * 14
+input_size = 14 * 14 # MLP_RUNNER2
+# input_size = 2 * 14 * 14 # MLP_RUNNER
 hidden_sizes = [600, 600, 200]
 lr = 1e-5
 epochs = 100
 batch_size = 100
 
 for i in range(test_rounds):
-    model = NeuralNet(input_size, hidden_sizes)
+    # model = NeuralNet(input_size, hidden_sizes)
+    model = NeuralNetCalssifierComparer(input_size,
+                                        hidden_sizes,
+                                        hidden_sizes2 = [80, 80, 20])
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCELoss()
 
-    base = MLPRunner(model, criterion, optimizer, epochs, batch_size, name='mlp', writer_bool=True)
+    base = MLP2Runner(model, criterion, optimizer,
+                     epochs, batch_size, name='mlp', writer_bool=True)
     base.run()
 
 # for i in range(test_rounds):

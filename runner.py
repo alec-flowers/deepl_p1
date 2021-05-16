@@ -43,6 +43,7 @@ class BaseRunner(abc.ABC):
             self.test()
             self.current_epoch += 1
         self.graph_plot()
+        print("DONE")
 
     def train(self):
         self.model.train()
@@ -73,7 +74,9 @@ class BaseRunner(abc.ABC):
         self.train_acc.append(1 - (errors/n_samples))
         if self.current_epoch % 10 == 0:
             print(
-                f'Epoch: {self.current_epoch}  Loss: {self.train_loss[self.current_epoch]:.04f}  Accuracy: {self.train_acc[self.current_epoch]:.04f}')
+                f"Epoch: {self.current_epoch}" +
+                f"  Loss: {self.train_loss[self.current_epoch]:.04f}" +
+                f"  Accuracy: {self.train_acc[self.current_epoch]:.04f}")
 
         self.writer.add_scalar("Loss/Train",
                                self.train_loss[self.current_epoch],
@@ -82,21 +85,6 @@ class BaseRunner(abc.ABC):
                                self.train_acc[self.current_epoch],
                                self.current_epoch)
         self.writer.flush()
-
-    def graph_plot(self):
-        examples = iter(self.train_loader)
-        example_data, example_targets = examples.next()
-
-        # works with plain MLP:
-        # self.writer.add_graph(
-        #     self.model,
-        #     example_data.reshape(-1, 2, 14, 14).to(self.device))
-
-        # works with classifycompare NN with MLP2runner
-        print(self.model)
-        self.writer.add_graph(
-            self.model,
-            example_data.reshape(-1, 2, 14 * 14).to(self.device))
 
     def test(self):
         self.model.eval()
@@ -119,7 +107,8 @@ class BaseRunner(abc.ABC):
 
             if self.current_epoch % 10 == 0:
                 print(
-                    f'    TRAIN Loss: {self.test_loss[self.current_epoch]:.04f}  Accuracy: {self.test_acc[self.current_epoch]:.04f}')
+                    f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
+                    f"  Accuracy: {self.test_acc[self.current_epoch]:.04f}")
 
             self.writer.add_scalar("Loss/Test",
                                    self.test_loss[self.current_epoch],
@@ -133,6 +122,9 @@ class BaseRunner(abc.ABC):
     def rescale_inputs(self, inps, tgts):
         pass
 
+    @abc.abstractmethod
+    def graph_plot(self):
+        pass
 
 class ConvRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer, epochs,
@@ -147,6 +139,9 @@ class ConvRunner(BaseRunner):
 
     def rescale_inputs(self, inps, tgts):
         return inps, tgts
+
+    def graph_plot(self):
+        pass
 
 
 class MLPRunner(BaseRunner):
@@ -165,6 +160,18 @@ class MLPRunner(BaseRunner):
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
+    def reshape_inputs(self, inps):
+        return inps.reshape(-1, 2, 14, 14)
+
+    def graph_plot(self):
+        examples = iter(self.train_loader)
+        example_data, example_targets = examples.next()
+
+        with SummaryWriter(comment='plain mlp') as w:
+            self.writer.add_graph(
+            self.model,
+            example_data.reshape(-1, 2* 14* 14).to(self.device))
+
 
 class MLP2Runner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
@@ -181,3 +188,14 @@ class MLP2Runner(BaseRunner):
         inps = inps.reshape(-1, 2, 14 * 14).to(self.device).float()
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
+
+
+    def graph_plot(self):
+        examples = iter(self.train_loader)
+        example_data, example_targets = examples.next()
+        with SummaryWriter(comment='classifiercomparer') as w:
+            self.writer.add_graph(
+                self.model,
+                example_data.reshape(-1, 2, 14 * 14).to(self.device)
+            )
+

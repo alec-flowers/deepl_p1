@@ -46,50 +46,71 @@ class Net(nn.Module):
         return x
 
 
-class NeuralNetCalssifierComparer(nn.Module):
+class NeuralNetCalssifier(nn.Module):
     # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer
     def __init__(self, input_size, hidden_sizes,
-                 hidden_sizes2, num_labels=10, output_size=1):
-        super(NeuralNetCalssifierComparer, self).__init__()
+                 num_labels=10):
+        super(NeuralNetCalssifier, self).__init__()
         self.input_size = input_size
         sizes = [input_size] + hidden_sizes + [num_labels]
         self.layers_classifier = nn.ModuleList(
             [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
         self.relus_classifier = nn.ModuleList(
             [nn.ReLU() for _ in range(len(self.layers_classifier))])
-        sizes2 = [2 * num_labels] + hidden_sizes2 + [output_size]
+
+    def forward(self, x1, x2):
+        for i, (layer, relu) in enumerate(zip(self.layers_classifier,
+                                              self.relus_classifier)):
+            x1 = layer(x1)
+            x2 = layer(x2)
+            if i + 1 < len(self.layers_classifier):
+                x1 = relu(x1)
+                x2 = relu(x2)
+        return torch.cat((x1, x2), 1)
+
+
+class NeuralNetComparer(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self, input_size, hidden_sizes,
+                 num_labels=10, output_size=1):
+        super(NeuralNetComparer, self).__init__()
+        sizes = [2 * num_labels] + hidden_sizes + [output_size]
         self.layers_comparer = nn.ModuleList(
-            [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes2, sizes2[1:])])
+            [nn.Linear(in_f, out_f) for in_f, out_f in zip(sizes, sizes[1:])])
         self.relus_comparer = nn.ModuleList(
             [nn.ReLU() for _ in range(len(self.layers_comparer))])
         self.sigmoid = nn.Sigmoid()
-        # self.softmax = nn.Softmax(dim=0)
 
-    def classify(self, x):
-        for i, (layer,relu) in enumerate(zip(self.layers_classifier,
-                                             self.relus_classifier)):
-            x = layer(x)
-            if i + 1 < len(self.layers_classifier):
-                x = relu(x)
-        out = x
-        # out = self.softmax(x)
-        return out
-
-    def compare(self, x):
+    def forward(self, x):
         for i, (layer, relu) in enumerate(zip(self.layers_comparer,
-                                              self.relus_classifier)):
+                                              self.relus_comparer)):
             x = layer(x)
             if i + 1 < len(self.layers_comparer):
                 x = relu(x)
         out = self.sigmoid(x)
-        return out
+        return out, x
+
+
+class NeuralNetCalssifierComparer(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self, input_size,
+                 hidden_sizes_classifier, hidden_sizes_comparer,
+                 num_labels=10, output_size=1,
+                 aux_loss=False):
+        super(NeuralNetCalssifierComparer, self).__init__()
+        self.input_size = input_size
+        self.classifier = NeuralNetCalssifier(input_size,
+                                              hidden_sizes_classifier)
+        self.comparer = NeuralNetComparer(input_size,
+                                          hidden_sizes_comparer)
+
+        self.aux_loss = aux_loss
 
     def forward(self, x):
         # x : 2, 14*14
-        labels1 = self.classify(x[:, 0, ...])
-        labels2 = self.classify(x[:, 1, ...])
-        labels = torch.cat((labels1,
-                            labels2), 1)
-        out = self.compare(labels)
-        return out
+        tgts, _ = self.comparer(self.classifier(x[:, 0, ...],
+                                                x[:, 1, ...]))
+        return tgts

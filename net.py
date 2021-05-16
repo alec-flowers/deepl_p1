@@ -84,13 +84,14 @@ class NeuralNetComparer(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
+        inp = x
         for i, (layer, relu) in enumerate(zip(self.layers_comparer,
                                               self.relus_comparer)):
             x = layer(x)
             if i + 1 < len(self.layers_comparer):
                 x = relu(x)
         out = self.sigmoid(x)
-        return out, x
+        return out, inp
 
 
 class NeuralNetCalssifierComparer(nn.Module):
@@ -114,3 +115,27 @@ class NeuralNetCalssifierComparer(nn.Module):
         tgts, _ = self.comparer(self.classifier(x[:, 0, ...],
                                                 x[:, 1, ...]))
         return tgts
+
+
+class NeuralNetCalssifierComparerAuxLoss(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self, input_size,
+                 hidden_sizes_classifier, hidden_sizes_comparer,
+                 num_labels=10, output_size=1,
+                 aux_loss=False):
+        super(NeuralNetCalssifierComparerAuxLoss, self).__init__()
+        self.input_size = input_size
+        self.classifier = NeuralNetCalssifier(input_size,
+                                              hidden_sizes_classifier)
+        self.comparer = NeuralNetComparer(input_size,
+                                          hidden_sizes_comparer)
+
+        self.aux_loss = aux_loss
+        self.num_labels = num_labels
+
+    def forward(self, x):
+        # x : 2, 14*14
+        tgts, labels = self.comparer(self.classifier(x[:, 0, ...],
+                                                     x[:, 1, ...]))
+        return tgts, labels[:, :self.num_labels], labels[:, self.num_labels:]

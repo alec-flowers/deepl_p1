@@ -14,6 +14,7 @@ class BaseRunner(abc.ABC):
                  epochs,
                  batch_size,
                  name,
+                 weights=[1.0],
                  writer_bool=False):
 
         self.device = torch.device(
@@ -27,6 +28,7 @@ class BaseRunner(abc.ABC):
         self.optimizer = optimizer
         self.epochs = epochs
         self.current_epoch = 0
+        self.weights = weights
         if writer_bool:
             self.writer = SummaryWriter('runs/'+self.name)
         else:
@@ -53,11 +55,27 @@ class BaseRunner(abc.ABC):
         for i, (inps, [tgts, clas]) in enumerate(self.train_loader):
             # origin shape: [n, 2, 14, 14]
             # resized: [n, 2*14*14]
+            clas = clas.to(self.device)
             inps, tgts = self.rescale_inputs(inps, tgts)
-
+            tgtss = [tgts,
+                     clas[:, 0],
+                     clas[:, 1]]
             # Forward pass
-            outputs = self.model(inps)
-            loss = self.criterion(outputs, tgts)
+            outputss = self.model(inps)
+            self.len_outputss = \
+                1 if type(outputss) is not tuple else len(outputss)
+            if self.len_outputss == 1:
+                loss = self.criterion[0](outputss, tgts)
+                outputs = outputss
+            else:
+                loss = torch.Tensor([0.0]).to(self.device)
+                for i, outputs in enumerate(outputss):
+                    # print(f"{i=}")
+                    # print(f"{tgtss[i].shape=}")
+                    # print(f"{outputs.shape=}")
+                    # print(f"{self.criterion[i]=}")
+                    loss += self.criterion[i](outputs, tgtss[i])
+                outputs = outputss[0]
 
             # Backward and optimize
             self.optimizer.zero_grad()
@@ -94,8 +112,19 @@ class BaseRunner(abc.ABC):
         with torch.no_grad():
             for i, (inps, [tgts, clas]) in enumerate(self.test_loader):
                 inps, tgts = self.rescale_inputs(inps, tgts)
-                outputs = self.model(inps)
-                loss = self.criterion(outputs, tgts)
+                clas = clas.to(self.device)
+                tgtss = [tgts,
+                         clas[:, 0],
+                         clas[:, 1]]
+                outputss = self.model(inps)
+                if self.len_outputss == 1:
+                    loss = self.criterion[0](outputss, tgts)
+                    outputs = outputss
+                else:
+                    loss = torch.Tensor([0.0]).to(self.device)
+                    for i, outputs in enumerate(outputss):
+                        loss += self.criterion[i](outputs, tgtss[i])
+                    outputs = outputss[0]
 
                 # Save Info
                 running_loss += loss.item()
@@ -126,15 +155,17 @@ class BaseRunner(abc.ABC):
     def graph_plot(self):
         pass
 
+
 class ConvRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer, epochs,
-                 batch_size, name, writer_bool=False):
+                 batch_size, name, weights=[1.0], writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,
                          epochs,
                          batch_size,
                          name,
+                         weights,
                          writer_bool)
 
     def rescale_inputs(self, inps, tgts):
@@ -146,13 +177,14 @@ class ConvRunner(BaseRunner):
 
 class MLPRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, writer_bool=False):
+                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,
                          epochs,
                          batch_size,
                          name,
+                         weights,
                          writer_bool)
 
     def rescale_inputs(self, inps, tgts):
@@ -169,19 +201,20 @@ class MLPRunner(BaseRunner):
 
         with SummaryWriter(comment='plain mlp') as w:
             self.writer.add_graph(
-            self.model,
-            example_data.reshape(-1, 2* 14* 14).to(self.device))
+                self.model,
+                example_data.reshape(-1, 2 * 14 * 14).to(self.device))
 
 
 class MLP2Runner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, writer_bool=False):
+                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
         super().__init__(model,
                          criterion,
                          optimizer,
                          epochs,
                          batch_size,
                          name,
+                         weights,
                          writer_bool)
 
     def rescale_inputs(self, inps, tgts):
@@ -189,13 +222,11 @@ class MLP2Runner(BaseRunner):
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
-
     def graph_plot(self):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
-        with SummaryWriter(comment='classifiercomparer') as w:
+        with SummaryWriter(comment='classifier_comparer') as w:
             self.writer.add_graph(
                 self.model,
                 example_data.reshape(-1, 2, 14 * 14).to(self.device)
             )
-

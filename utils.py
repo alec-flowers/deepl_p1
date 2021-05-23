@@ -38,7 +38,13 @@ def report_from(run_output, name):
             train_accs[i], test_accs[i] =\
                 (run_output[i])
     std_test_acc, mean_test_acc = torch.std_mean(test_accs)
-    print(f"TEST ACCURACIES for {name} MEAN: {mean_test_acc.item()}, STD: {std_test_acc.item()}")
+    std_train_acc, mean_train_acc = torch.std_mean(train_accs)
+    if rounds > 1:
+        print(f"TRAIN ACCURACIES for {name} MEAN: {mean_train_acc.item():.04f}, STD: {std_train_acc.item():.04f}")
+        print(f"TEST ACCURACIES for {name} MEAN: {mean_test_acc.item():.04f}, STD: {std_test_acc.item():.04f}")
+    else:
+        print(f"TRAIN ACCURACY for {name}: {mean_train_acc.item():.04f}")
+        print(f"TEST ACCURACY for {name}: {mean_test_acc.item():.04f}")
     print("\n")
 
 

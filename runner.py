@@ -15,6 +15,7 @@ class BaseRunner(abc.ABC):
                  batch_size,
                  name,
                  weights=[1.0],
+                 verbose=False,
                  writer_bool=False):
 
         self.device = torch.device(
@@ -30,6 +31,7 @@ class BaseRunner(abc.ABC):
         self.current_epoch = 0
         self.weights = weights
         self.writer_bool = writer_bool
+        self.verbose = verbose
         if writer_bool:
             self.writer = SummaryWriter('runs/'+self.name)
 
@@ -43,8 +45,12 @@ class BaseRunner(abc.ABC):
             self.train()
             self.test()
             self.current_epoch += 1
-        self.graph_plot()
-        print("DONE")
+        self.report()
+        if self.writer_bool:
+            self.graph_plot()
+        return (self.train_loss[-1], self.test_loss[-1],
+                self.train_acc[-1], self.test_acc[-1])
+
 
     def train(self):
         self.model.train()
@@ -69,10 +75,6 @@ class BaseRunner(abc.ABC):
             else:
                 loss = torch.Tensor([0.0]).to(self.device)
                 for i, outputs in enumerate(outputss):
-                    # print(f"{i=}")
-                    # print(f"{tgtss[i].shape=}")
-                    # print(f"{outputs.shape=}")
-                    # print(f"{self.criterion[i]=}")
                     loss += self.criterion[i](outputs, tgtss[i])
                 outputs = outputss[0]
 
@@ -89,7 +91,7 @@ class BaseRunner(abc.ABC):
         a = len(self.train_loader)
         self.train_loss.append(running_loss/len(self.train_loader))
         self.train_acc.append(1 - (errors/n_samples))
-        if self.current_epoch % 10 == 0:
+        if self.current_epoch % 10 == 0 and self.verbose:
             print(
                 f"Epoch: {self.current_epoch}" +
                 f"  Loss: {self.train_loss[self.current_epoch]:.04f}" +
@@ -133,7 +135,7 @@ class BaseRunner(abc.ABC):
             self.test_loss.append(running_loss/len(self.test_loader))
             self.test_acc.append(1 - (errors/n_samples))
 
-            if self.current_epoch % 10 == 0:
+            if self.current_epoch % 10 == 0 and self.verbose:
                 print(
                     f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
                     f" Accuracy: {self.test_acc[self.current_epoch]:.04f}")
@@ -145,6 +147,9 @@ class BaseRunner(abc.ABC):
                                    self.test_acc[self.current_epoch],
                                    self.current_epoch)
                 self.writer.flush()
+
+    def report(self):
+        print(f"{self.name} Neural Network : Ultimate Train Accuracy:{self.train_acc[-1]:.04f}, Test Accuracy:{self.test_acc[-1]:.04f}")
 
     @abc.abstractmethod
     def rescale_inputs(self, inps, tgts):
@@ -176,7 +181,8 @@ class ConvRunner(BaseRunner):
 
 class MLPRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
+                 epochs, batch_size, name, weights=[1.0],
+                 writer_bool=False, verbose=False):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -184,7 +190,8 @@ class MLPRunner(BaseRunner):
                          batch_size,
                          name,
                          weights,
-                         writer_bool)
+                         writer_bool,
+                         verbose)
 
     def rescale_inputs(self, inps, tgts):
         inps = inps.reshape(-1, 2 * 14 * 14).to(self.device).float()
@@ -207,7 +214,8 @@ class MLPRunner(BaseRunner):
 
 class MLPClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
+                 epochs, batch_size, name, weights=[1.0],
+                 writer_bool=False, verbose=False):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -215,7 +223,8 @@ class MLPClassifierComparerRunner(BaseRunner):
                          batch_size,
                          name,
                          weights,
-                         writer_bool)
+                         writer_bool,
+                         verbose)
 
     def rescale_inputs(self, inps, tgts):
         inps = inps.reshape(-1, 2, 14 * 14).to(self.device).float()

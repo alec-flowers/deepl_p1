@@ -1,8 +1,13 @@
+import os
 import torch
 from torch import nn
 from runner import *
 from net import NeuralNet, Net, NeuralNetCalssifierComparer,\
     NeuralNetCalssifierComparerAuxLoss
+tensorboard_output = True
+if tensorboard_output:
+    os.system('rm -rf ./runs &')
+    os.system('tensorboard --logdir=runs &')
 
 test_rounds = 1
 input_size_cc = 14 * 14  # MLP_RUNNER2
@@ -20,7 +25,7 @@ for i in range(test_rounds):
 
     base_mlp = MLPRunner(model_mlp, [criterion_mlp], optimizer_mlp,
                          epochs, batch_size,
-                         name='mlp', weights=[1.0] ,writer_bool=True)
+                         name='mlp', weights=[1.0], writer_bool=False)
     base_mlp.run()
 
 for i in range(test_rounds):
@@ -30,9 +35,10 @@ for i in range(test_rounds):
     optimizer_cc = torch.optim.Adam(model_cc.parameters(), lr=lr)
     criterion_cc = nn.BCELoss()
 
-    base_cc = MLP2Runner(model_cc, [criterion_cc], optimizer_cc,
-                         epochs, batch_size,
-                         name='mlp_classifier_comparer', writer_bool=True)
+    base_cc = MLPClassifierComparerRunner(
+        model_cc, [criterion_cc], optimizer_cc,
+        epochs, batch_size,
+        name='mlp_classifier_comparer', writer_bool=True)
     base_cc.run()
 
 
@@ -45,7 +51,7 @@ for i in range(test_rounds):
     criterion_cc_aux_main = nn.BCELoss()
     criterion_cc_aux_aux = nn.CrossEntropyLoss()
 
-    base_cc_aux = MLP2Runner(
+    base_cc_aux = MLPClassifierComparerRunner(
         model_cc_aux, [criterion_cc_aux_main,
                        criterion_cc_aux_aux,
                        criterion_cc_aux_aux], optimizer_cc_aux,
@@ -71,5 +77,6 @@ for i in range(test_rounds):
 #     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 #     criterion = nn.BCELoss()
 #
-#     base = MLP2Runner(model, criterion, optimizer, None, epochs, batch_size)
+#     base = MLPClassifierComparerRunner(model, criterion,
+# optimizer, None, epochs, batch_size)
 #     base.run()

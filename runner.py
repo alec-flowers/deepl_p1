@@ -29,10 +29,9 @@ class BaseRunner(abc.ABC):
         self.epochs = epochs
         self.current_epoch = 0
         self.weights = weights
+        self.writer_bool = writer_bool
         if writer_bool:
             self.writer = SummaryWriter('runs/'+self.name)
-        else:
-            self.writer = DummySummaryWriter()
 
         self.train_loss = []
         self.train_acc = []
@@ -95,14 +94,14 @@ class BaseRunner(abc.ABC):
                 f"Epoch: {self.current_epoch}" +
                 f"  Loss: {self.train_loss[self.current_epoch]:.04f}" +
                 f"  Accuracy: {self.train_acc[self.current_epoch]:.04f}")
-
-        self.writer.add_scalar("Loss/Train",
+        if self.writer_bool:
+            self.writer.add_scalar("Loss/Train",
                                self.train_loss[self.current_epoch],
                                self.current_epoch)
-        self.writer.add_scalar("Accuracy/Train",
+            self.writer.add_scalar("Accuracy/Train",
                                self.train_acc[self.current_epoch],
                                self.current_epoch)
-        self.writer.flush()
+            self.writer.flush()
 
     def test(self):
         self.model.eval()
@@ -137,15 +136,15 @@ class BaseRunner(abc.ABC):
             if self.current_epoch % 10 == 0:
                 print(
                     f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
-                    f"  Accuracy: {self.test_acc[self.current_epoch]:.04f}")
-
-            self.writer.add_scalar("Loss/Test",
+                    f" Accuracy: {self.test_acc[self.current_epoch]:.04f}")
+            if self.writer_bool:
+                self.writer.add_scalar("Loss/Test",
                                    self.test_loss[self.current_epoch],
                                    self.current_epoch)
-            self.writer.add_scalar("Accuracy/Test",
+                self.writer.add_scalar("Accuracy/Test",
                                    self.test_acc[self.current_epoch],
                                    self.current_epoch)
-            self.writer.flush()
+                self.writer.flush()
 
     @abc.abstractmethod
     def rescale_inputs(self, inps, tgts):
@@ -199,13 +198,14 @@ class MLPRunner(BaseRunner):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
 
-        with SummaryWriter(comment='plain mlp') as w:
-            self.writer.add_graph(
-                self.model,
-                example_data.reshape(-1, 2 * 14 * 14).to(self.device))
+        if self.writer_bool:
+            with SummaryWriter(comment='plain mlp') as w:
+                self.writer.add_graph(
+                    self.model,
+                    example_data.reshape(-1, 2 * 14 * 14).to(self.device))
 
 
-class MLP2Runner(BaseRunner):
+class MLPClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
                  epochs, batch_size, name, weights=[1.0], writer_bool=False):
         super().__init__(model,
@@ -225,8 +225,8 @@ class MLP2Runner(BaseRunner):
     def graph_plot(self):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
-        with SummaryWriter(comment='classifier_comparer') as w:
-            self.writer.add_graph(
-                self.model,
-                example_data.reshape(-1, 2, 14 * 14).to(self.device)
-            )
+        if self.writer_bool:
+            with SummaryWriter(comment='classifier_comparer') as w:
+                self.writer.add_graph(
+                    self.model,
+                    example_data.reshape(-1, 2, 14 * 14).to(self.device))

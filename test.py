@@ -4,7 +4,8 @@ from torch import nn
 from runner import *
 from net import NeuralNet, Net, NeuralNetCalssifierComparer,\
     NeuralNetCalssifierComparerAuxLoss
-from utils import report_from
+from utils import report_from, Verbosity
+verbose = Verbosity.Some
 
 tensorboard_output = False
 if tensorboard_output:
@@ -28,10 +29,10 @@ for i in range(test_rounds):
 
     MLP = MLPRunner(model_mlp, [criterion_mlp], optimizer_mlp,
                     epochs, batch_size,
-                    name=f'MLP_{i}', weights=[1.0],
-                    writer_bool=tensorboard_output, verbose=False)
+                    name=f'MLP_VANILLA_{i}', weights=[1.0],
+                    writer_bool=tensorboard_output, verbose=verbose)
     MLP_run_output.append(MLP.run())
-report_from(MLP_run_output, "MLP")
+report_from(MLP_run_output, "MLP_VANILLA")
 
 CC_run_output = []
 for i in range(test_rounds):
@@ -45,9 +46,9 @@ for i in range(test_rounds):
         model_cc, [criterion_cc], optimizer_cc,
         epochs, batch_size,
         name=f'MLP_classifier_comparer_{i}',
-        writer_bool=tensorboard_output, verbose=False)
+        writer_bool=tensorboard_output, verbose=verbose)
     CC_run_output.append(CC.run())
-report_from(CC_run_output, "CC")
+report_from(CC_run_output, "MLP_classifier_comparer")
 
 CC_aux_run_output = []
 for i in range(test_rounds):
@@ -64,10 +65,10 @@ for i in range(test_rounds):
                        criterion_cc_aux_aux,
                        criterion_cc_aux_aux], optimizer_cc_aux,
         epochs, batch_size,
-        name=f'mlp_classifier_comparer_aux_{i}',
-        writer_bool=tensorboard_output, verbose=False)
+        name=f'MLP_classifier_comparer_auxiliary_{i}',
+        writer_bool=tensorboard_output, verbose=verbose)
     CC_aux_run_output.append(MLP_CC_aux.run())
-report_from(CC_aux_run_output, "CC_aux")
+report_from(CC_aux_run_output, "MLP_classifier_comparer_auxiliary")
 # for i in range(test_rounds):
 #     model = Net(10)
 #     optimizer = torch.optim.Adam(model.parameters(), lr=lr)

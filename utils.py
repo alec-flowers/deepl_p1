@@ -1,5 +1,5 @@
 import torch
-
+from enum import Enum
 
 class DummySummaryWriter:
     def __init__(*args, **kwargs):
@@ -19,6 +19,12 @@ def nb_errors(output, actual):
         predict = output.round()
     error = sum(~predict.eq(actual)).item()
     return error
+
+class Verbosity(Enum):
+    Full=2
+    Some=1
+    No=0
+
 
 
 def report_from(run_output, name):

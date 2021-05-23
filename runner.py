@@ -1,7 +1,7 @@
 import abc
 from data import load_data
 import torch
-from utils import nb_errors, DummySummaryWriter
+from utils import nb_errors, DummySummaryWriter, Verbosity
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
@@ -15,8 +15,8 @@ class BaseRunner(abc.ABC):
                  batch_size,
                  name,
                  weights=[1.0],
-                 verbose=False,
-                 writer_bool=False):
+                 writer_bool=False,
+                 verbose=Verbosity.No):
 
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,12 +45,12 @@ class BaseRunner(abc.ABC):
             self.train()
             self.test()
             self.current_epoch += 1
-        self.report()
+        if self.verbose == Verbosity.Some or self.verbose == Verbosity.Full:
+            self.report()
         if self.writer_bool:
             self.graph_plot()
         return (self.train_loss[-1], self.test_loss[-1],
                 self.train_acc[-1], self.test_acc[-1])
-
 
     def train(self):
         self.model.train()
@@ -91,18 +91,18 @@ class BaseRunner(abc.ABC):
         a = len(self.train_loader)
         self.train_loss.append(running_loss/len(self.train_loader))
         self.train_acc.append(1 - (errors/n_samples))
-        if self.current_epoch % 10 == 0 and self.verbose:
+        if self.current_epoch % 10 == 0 and self.verbose == Verbosity.Full:
             print(
                 f"Epoch: {self.current_epoch}" +
                 f"  Loss: {self.train_loss[self.current_epoch]:.04f}" +
                 f"  Accuracy: {self.train_acc[self.current_epoch]:.04f}")
         if self.writer_bool:
             self.writer.add_scalar("Loss/Train",
-                               self.train_loss[self.current_epoch],
-                               self.current_epoch)
+                                   self.train_loss[self.current_epoch],
+                                   self.current_epoch)
             self.writer.add_scalar("Accuracy/Train",
-                               self.train_acc[self.current_epoch],
-                               self.current_epoch)
+                                   self.train_acc[self.current_epoch],
+                                   self.current_epoch)
             self.writer.flush()
 
     def test(self):
@@ -135,21 +135,22 @@ class BaseRunner(abc.ABC):
             self.test_loss.append(running_loss/len(self.test_loader))
             self.test_acc.append(1 - (errors/n_samples))
 
-            if self.current_epoch % 10 == 0 and self.verbose:
+            if self.current_epoch % 10 == 0 and self.verbose == 2:
                 print(
                     f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
                     f" Accuracy: {self.test_acc[self.current_epoch]:.04f}")
             if self.writer_bool:
                 self.writer.add_scalar("Loss/Test",
-                                   self.test_loss[self.current_epoch],
-                                   self.current_epoch)
+                                       self.test_loss[self.current_epoch],
+                                       self.current_epoch)
                 self.writer.add_scalar("Accuracy/Test",
-                                   self.test_acc[self.current_epoch],
-                                   self.current_epoch)
+                                       self.test_acc[self.current_epoch],
+                                       self.current_epoch)
                 self.writer.flush()
 
     def report(self):
-        print(f"{self.name} Neural Network : Ultimate Train Accuracy:{self.train_acc[-1]:.04f}, Test Accuracy:{self.test_acc[-1]:.04f}")
+        print(
+            f"{self.name} Neural Network : Ultimate Train Accuracy:{self.train_acc[-1]:.04f}, Test Accuracy:{self.test_acc[-1]:.04f}")
 
     @abc.abstractmethod
     def rescale_inputs(self, inps, tgts):
@@ -182,7 +183,7 @@ class ConvRunner(BaseRunner):
 class MLPRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
                  epochs, batch_size, name, weights=[1.0],
-                 writer_bool=False, verbose=False):
+                 writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -215,7 +216,7 @@ class MLPRunner(BaseRunner):
 class MLPClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
                  epochs, batch_size, name, weights=[1.0],
-                 writer_bool=False, verbose=False):
+                 writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,

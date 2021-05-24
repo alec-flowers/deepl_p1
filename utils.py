@@ -13,10 +13,16 @@ class DummySummaryWriter:
 
 
 def nb_errors(output, actual):
+    print(output.shape)
+    print(actual.shape)
     if output.size(1) > 1:
         predict = output.argmax(1)
     else:
         predict = output.round()
+    actual = actual.unsqueeze(dim=1)
+    print(f"{actual.shape=}")
+    print(f"{predict.shape=}")
+    # print(sum(~predict.eq(actual)))
     error = sum(~predict.eq(actual)).item()
     return error
 

@@ -5,7 +5,7 @@ from runner import *
 from net import NeuralNet, Net, NeuralNetCalssifierComparer,\
     NeuralNetCalssifierComparerAuxLoss
 from utils import report_from, Verbosity
-verbose = Verbosity.No
+verbose = Verbosity.Full
 
 tensorboard_output = True
 if tensorboard_output:
@@ -16,13 +16,13 @@ test_rounds = 1
 input_size_cc = 14 * 14  # MLP_RUNNER2
 input_size_mlp = 2 * 14 * 14  # MLP_RUNNER
 lr = 1e-5
-epochs = 1000
+epochs = 100
 batch_size = 100
 
-hidden_sizes_list = [[200, 200, 196],
-                     [300, 300, 196],
-                     [400, 400, 196],
-                     [600, 600, 196]]
+hidden_sizes_list = [[200, 196]]#,
+                     # [300, 300, 196],
+                     # [400, 400, 196],
+                     # [600, 600, 196]]
 
 # hidden_sizes_list = [[200, 196],
 #                      [300, 196],
@@ -30,22 +30,22 @@ hidden_sizes_list = [[200, 200, 196],
 #                      [600, 196]]
 
 
-for hidden_size in hidden_sizes_list:
-    MLP_run_output = []
-    for i in range(test_rounds):
-        model_mlp = NeuralNet(input_size_mlp, hidden_size,
-                              batchnorm_bool=True,
-                              dropout_bool=True)  # plain MLP
+# for hidden_size in hidden_sizes_list:
+#     MLP_run_output = []
+#     for i in range(test_rounds):
+#         model_mlp = NeuralNet(input_size_mlp, hidden_size,
+#                               batchnorm_bool=True,
+#                               dropout_bool=True)  # plain MLP
 
-        optimizer_mlp = torch.optim.Adam(model_mlp.parameters(), lr=lr)
-        criterion_mlp = nn.BCELoss()
+#         optimizer_mlp = torch.optim.Adam(model_mlp.parameters(), lr=lr)
+#         criterion_mlp = nn.BCELoss()
 
-        MLP = MLPRunner(model_mlp, [criterion_mlp], optimizer_mlp,
-                        epochs, batch_size,
-                        name=f'MLP_VANILLA_{i}_{hidden_size}', weights=[1.0],
-                        writer_bool=tensorboard_output, verbose=verbose)
-        MLP_run_output.append(MLP.run())
-    report_from(MLP_run_output, f"MLP_VANILLA_{hidden_size}")
+#         MLP = MLPRunner(model_mlp, [criterion_mlp], optimizer_mlp,
+#                         epochs, batch_size,
+#                         name=f'MLP_VANILLA_{i}_{hidden_size}', weights=[1.0],
+#                         writer_bool=tensorboard_output, verbose=verbose)
+#         MLP_run_output.append(MLP.run())
+#     report_from(MLP_run_output, f"MLP_VANILLA_{hidden_size}")
 
 
 for hidden_size in hidden_sizes_list:
@@ -82,7 +82,7 @@ for hidden_size in hidden_sizes_list:
         criterion_cc_aux_main = nn.BCELoss()
         criterion_cc_aux_aux = nn.CrossEntropyLoss()
 
-        MLP_CC_aux = MLPClassifierComparerRunner(
+        MLP_CC_aux = MLPClassifierComparerRunnerAux(
             model_cc_aux, [criterion_cc_aux_main,
                            criterion_cc_aux_aux,
                            criterion_cc_aux_aux], optimizer_cc_aux,

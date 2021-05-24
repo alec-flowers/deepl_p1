@@ -8,12 +8,12 @@ class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_sizes, output_size=1,
                  batchnorm_bool=False,
                  dropout_bool=False):
-                """
+        """
         Constructor for a NN (Vanilla MLP) used for classifying and comparison at the same time
 
         :param input_size:                  The size of the input for forward parse
         :param hidden_sizes:                List of sizes of hidden fully connected layers
-        :param output_size:                 The size of the output of the NN   
+        :param output_size:                 The size of the output of the NN
         :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not
         :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not
         """
@@ -82,7 +82,7 @@ class NeuralNetCalssifier(nn.Module):
                  num_labels=10,
                  batchnorm_classifer_bool=False,
                  dropout_classifier_bool=False):
-                """
+        """
         Constructor for a NN working as the classifier sub-module
 
         :param input_size:                  The size of the input for forward parse

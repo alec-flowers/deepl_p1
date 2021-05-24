@@ -2,6 +2,10 @@ import torch.nn as nn
 from torch.nn import functional as F
 import torch
 
+old_repr = torch.Tensor.__repr__
+def tensor_info(tensor):
+    return repr(tensor.shape)[6:] + ' ' + repr(tensor.dtype)[6:] + '@' + str(tensor.device) + '\n' + old_repr(tensor)
+torch.Tensor.__repr__ = tensor_info
 
 class NeuralNet(nn.Module):
     # Fully connected neural network with arbitrary hidden layers
@@ -24,25 +28,128 @@ class NeuralNet(nn.Module):
         return out
 
 
-class Net(nn.Module):
+class ConvNet(nn.Module):
     def __init__(self, hidden):
         super().__init__()
         self.conv1 = nn.Conv2d(2, 32, kernel_size=5)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
         self.fc1 = nn.Linear(576, hidden)
-        self.fc2 = nn.Linear(hidden, 2)
+        self.fc2 = nn.Linear(hidden, 1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        shape0 = x.size()
         x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=3, stride=1))
-        shape1 = x.size()
         x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=2, stride=1))
-        shape2 = x.size()
-        shape2h = x.view(-1, 576).size()
         x = F.relu(self.fc1(x.view(-1, 576)))
-        shape3 = x.size()
         x = self.fc2(x)
-        shape4 = x.size()
+        x = self.sigmoid(x)
+        return x
+
+
+class ConvNet2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(2, 32, kernel_size=5),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=1),
+            nn.Conv2d(32, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=1),
+        )
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=.5),
+            nn.Linear(1024, 1024),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=.5),
+            nn.Linear(1024, 1024),
+            nn.ReLU(inplace=True),
+            nn.Linear(1024, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 1024)
+        x = self.classifier(x)
+        return x
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 17152)
+        x = self.classifier(x)
+        return x
+
+class ConvNet3(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(2, 32, kernel_size=5),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(kernel_size=3, stride=1),
+            nn.Dropout(p=.25),
+            nn.Conv2d(32, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=3, stride=1),
+            nn.Dropout(p=.25)
+        )
+        self.classifier = nn.Sequential(
+            #nn.Dropout(p=.5),
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=.25),
+            nn.Linear(256, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 1024)
+        x = self.classifier(x)
+        return x
+
+class ConvNet4(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(2, 32, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(kernel_size=2, stride=1),
+            nn.Dropout(p=.25),
+            nn.Conv2d(32, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=2, stride=2,padding=1),
+            nn.Dropout(p=.25)
+        )
+        self.classifier = nn.Sequential(
+            #nn.Dropout(p=.5),
+            nn.Linear(576, 288),
+            nn.BatchNorm1d(288),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=.25),
+            nn.Linear(288, 144),
+            nn.BatchNorm1d(144),
+            nn.ReLU(inplace=True),
+            nn.Linear(144, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 576)
+        x = self.classifier(x)
         return x
 
 
@@ -67,6 +174,47 @@ class NeuralNetCalssifier(nn.Module):
             if i + 1 < len(self.layers_classifier):
                 x1 = relu(x1)
                 x2 = relu(x2)
+        return torch.cat((x1, x2), 1)
+
+class CNNClassifier(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self):
+        super(CNNClassifier, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(kernel_size=2, stride=1),
+            nn.Dropout(p=.25),
+            nn.Conv2d(32, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=1),
+            nn.Dropout(p=.25)
+        )
+        self.classifier = nn.Sequential(
+            #nn.Dropout(p=.5),
+            nn.Linear(576, 288),
+            nn.BatchNorm1d(288),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=.25),
+            nn.Linear(288, 144),
+            nn.BatchNorm1d(144),
+            nn.ReLU(inplace=True),
+            nn.Linear(144, 10),
+            nn.Softmax()
+        )
+
+    def forward(self, x1, x2):
+        x1 = self.features(x1)
+        x2 = self.features(x2)
+        x1 = self.classifier(x1)
+        x2 = self.classifier(x2)
         return torch.cat((x1, x2), 1)
 
 
@@ -103,8 +251,7 @@ class NeuralNetCalssifierComparer(nn.Module):
                  aux_loss=False):
         super(NeuralNetCalssifierComparer, self).__init__()
         self.input_size = input_size
-        self.classifier = NeuralNetCalssifier(input_size,
-                                              hidden_sizes_classifier)
+        self.classifier = CNNClassifier()
         self.comparer = NeuralNetComparer(input_size,
                                           hidden_sizes_comparer)
 

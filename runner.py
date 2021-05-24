@@ -20,6 +20,7 @@ class BaseRunner(abc.ABC):
 
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = 'cpu'
         self.name = name
         self.model = model
         self.model.to(self.device)
@@ -159,7 +160,8 @@ class BaseRunner(abc.ABC):
 
 class ConvRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer, epochs,
-                 batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
+                 batch_size, name, weights=[1.0],
+                 writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -194,7 +196,9 @@ class MLPRunner(BaseRunner):
 
     def rescale_inputs(self, inps, tgts):
         # TODO changed this with an extra 1
-        inps = inps.reshape(-1, 1, 2 * 14 * 14).to(self.device).float()
+        # inps = inps.reshape(-1, 1, 2 * 14 * 14).to(self.device).float()
+        # Reverted this change
+        inps = inps.reshape(-1, 2 * 14 * 14).to(self.device).float()
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
@@ -304,7 +308,8 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
 
 class CNNClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
+                 epochs, batch_size, name, weights=[1.0],
+                 writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,

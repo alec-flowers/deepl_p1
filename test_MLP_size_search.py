@@ -2,7 +2,7 @@ import os
 import torch
 from torch import nn
 from runner import *
-from net import NeuralNet, Net, NeuralNetCalssifierComparer,\
+from net import NeuralNet, NeuralNetCalssifierComparer,\
     NeuralNetCalssifierComparerAuxLoss
 from utils import report_from, Verbosity
 verbose = Verbosity.No

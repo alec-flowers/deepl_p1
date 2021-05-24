@@ -249,7 +249,7 @@ class CNNClassifier(nn.Module):
             nn.BatchNorm1d(144),
             nn.ReLU(inplace=True),
             nn.Linear(144, 10),
-            nn.Softmax()
+            nn.Softmax(dim=0)
         )
 
     def forward(self, x1, x2):

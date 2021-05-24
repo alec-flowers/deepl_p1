@@ -256,14 +256,16 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
                          verbose)
 
     def apply_criterion(self, forward_outputs, tgts, classes):
+        tgts = tgts.to(self.device)
+        classes = classes.to(self.device)
         tgtss = [tgts,
                  classes[:, 0],
                  classes[:, 1]]
         loss = torch.Tensor([0.0]).to(self.device)
         for i, outputs in enumerate(forward_outputs):
             loss += self.criterion[i](outputs, tgtss[i])
-
-        return loss, forward_outputs[0]
+        ret_output = forward_outputs[0].to(self.device)
+        return loss, ret_output
 
     def rescale_inputs(self, inps, tgts):
         inps = inps.reshape(-1, 2, 14 * 14).to(self.device).float()

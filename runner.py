@@ -131,7 +131,7 @@ class BaseRunner(abc.ABC):
             self.test_loss.append(running_loss/len(self.test_loader))
             self.test_acc.append(1 - (errors/n_samples))
 
-            if self.current_epoch % 10 == 0 and self.verbose == 2:
+            if self.current_epoch % 10 == 0 and self.verbose == Verbosity.Full:
                 print(
                     f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
                     f" Accuracy: {self.test_acc[self.current_epoch]:.04f}")
@@ -159,7 +159,7 @@ class BaseRunner(abc.ABC):
 
 class ConvRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer, epochs,
-                 batch_size, name, weights=[1.0], writer_bool=False):
+                 batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -167,7 +167,8 @@ class ConvRunner(BaseRunner):
                          batch_size,
                          name,
                          weights,
-                         writer_bool)
+                         writer_bool,
+                         verbose)
 
     def rescale_inputs(self, inps, tgts):
         tgts = tgts.to(self.device).reshape(-1, 1).float()
@@ -269,9 +270,39 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
-class CNNRunner(BaseRunner):
+    def graph_plot(self):
+        pass
+
+# class CNNRunner(BaseRunner):
+#     def __init__(self, model, criterion, optimizer,
+#                  epochs, batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
+#         super().__init__(model,
+#                          criterion,
+#                          optimizer,
+#                          epochs,
+#                          batch_size,
+#                          name,
+#                          weights,
+#                          writer_bool,
+#                          verbose)
+#
+#     def rescale_inputs(self, inps, tgts):
+#         #inps = inps.reshape(-1, 2, 14, 14).to(self.device).float()
+#         tgts = tgts.to(self.device).reshape(-1, 1).float()
+#         return inps, tgts
+#
+#     def graph_plot(self):
+#         examples = iter(self.train_loader)
+#         example_data, example_targets = examples.next()
+#         if self.writer_bool:
+#             with SummaryWriter(comment='classifier_comparer') as w:
+#                 self.writer.add_graph(
+#                     self.model,
+#                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
+
+class CNNClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
+                 epochs, batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
                          optimizer,
@@ -279,7 +310,18 @@ class CNNRunner(BaseRunner):
                          batch_size,
                          name,
                          weights,
-                         writer_bool)
+                         writer_bool,
+                         verbose)
+
+    def apply_criterion(self, forward_outputs, tgts, classes):
+        tgtss = [tgts,
+                 classes[:, 0],
+                 classes[:, 1]]
+        loss = torch.Tensor([0.0]).to(self.device)
+        for i, outputs in enumerate(forward_outputs):
+            loss += self.criterion[i](outputs, tgtss[i])
+
+        return loss, forward_outputs[0]
 
     def rescale_inputs(self, inps, tgts):
         #inps = inps.reshape(-1, 2, 14, 14).to(self.device).float()

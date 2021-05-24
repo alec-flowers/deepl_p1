@@ -170,6 +170,7 @@ class ConvRunner(BaseRunner):
                          writer_bool)
 
     def rescale_inputs(self, inps, tgts):
+        tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
     def graph_plot(self):
@@ -191,7 +192,8 @@ class MLPRunner(BaseRunner):
                          verbose)
 
     def rescale_inputs(self, inps, tgts):
-        inps = inps.reshape(-1, 2 * 14 * 14).to(self.device).float()
+        # TODO changed this with an extra 1
+        inps = inps.reshape(-1, 1, 2 * 14 * 14).to(self.device).float()
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 
@@ -264,6 +266,23 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
 
     def rescale_inputs(self, inps, tgts):
         inps = inps.reshape(-1, 2, 14 * 14).to(self.device).float()
+        tgts = tgts.to(self.device).reshape(-1, 1).float()
+        return inps, tgts
+
+class CNNRunner(BaseRunner):
+    def __init__(self, model, criterion, optimizer,
+                 epochs, batch_size, name, weights=[1.0], writer_bool=False):
+        super().__init__(model,
+                         criterion,
+                         optimizer,
+                         epochs,
+                         batch_size,
+                         name,
+                         weights,
+                         writer_bool)
+
+    def rescale_inputs(self, inps, tgts):
+        #inps = inps.reshape(-1, 2, 14, 14).to(self.device).float()
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 

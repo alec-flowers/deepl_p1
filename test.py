@@ -5,9 +5,9 @@ from runner import *
 from net import NeuralNet, Net, NeuralNetCalssifierComparer,\
     NeuralNetCalssifierComparerAuxLoss
 from utils import report_from, Verbosity
-verbose = Verbosity.Some
+verbose = Verbosity.Full
 
-tensorboard_output = True
+tensorboard_output = False
 if tensorboard_output:
     os.system('rm -rf ./runs &')
     os.system('tensorboard --logdir=runs &')
@@ -16,7 +16,7 @@ test_rounds = 1
 input_size_cc = 14 * 14  # MLP_RUNNER2
 input_size_mlp = 2 * 14 * 14  # MLP_RUNNER
 lr = 1e-5
-epochs = 200
+epochs = 40
 batch_size = 100
 
 hidden_sizes_list =  [[600, 600, 196],
@@ -36,7 +36,7 @@ for i in range(test_rounds):
                     name=f'MLP_VANILLA_{i}_{hidden_size}', weights=[1.0],
                     writer_bool=tensorboard_output, verbose=verbose)
         MLP_run_output.append(MLP.run())
-# report_from(MLP_run_output, "MLP_VANILLA")
+report_from(MLP_run_output, "MLP_VANILLA")
 
 CC_run_output = []
 for i in range(test_rounds):
@@ -53,7 +53,7 @@ for i in range(test_rounds):
         name=f'MLP_classifier_comparer_{i}_{hidden_size}',
         writer_bool=tensorboard_output, verbose=verbose)
         CC_run_output.append(CC.run())
-# report_from(CC_run_output, "MLP_classifier_comparer")
+report_from(CC_run_output, "MLP_classifier_comparer")
 
 CC_aux_run_output = []
 for i in range(test_rounds):
@@ -66,7 +66,7 @@ for i in range(test_rounds):
         criterion_cc_aux_main = nn.BCELoss()
         criterion_cc_aux_aux = nn.CrossEntropyLoss()
 
-        MLP_CC_aux = MLPClassifierComparerRunner(
+        MLP_CC_aux = MLPClassifierComparerRunnerAux(
             model_cc_aux, [criterion_cc_aux_main,
                            criterion_cc_aux_aux,
                            criterion_cc_aux_aux], optimizer_cc_aux,
@@ -74,7 +74,8 @@ for i in range(test_rounds):
             name=f'MLP_classifier_comparer_auxiliary_{i}_{hidden_size}',
             writer_bool=tensorboard_output, verbose=verbose)
         CC_aux_run_output.append(MLP_CC_aux.run())
-# report_from(CC_aux_run_output, "MLP_classifier_comparer_auxiliary")
+report_from(CC_aux_run_output, "MLP_classifier_comparer_auxiliary")
+
 # for i in range(test_rounds):
 #     model = Net(10)
 #     optimizer = torch.optim.Adam(model.parameters(), lr=lr)

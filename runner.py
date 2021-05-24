@@ -1,7 +1,7 @@
 import abc
 from data import load_data
 import torch
-from utils import nb_errors, DummySummaryWriter, Verbosity
+from utils import DummySummaryWriter, Verbosity
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
@@ -57,23 +57,30 @@ class BaseRunner(abc.ABC):
         loss.to(self.device)
         return loss, forward_outputs
 
+    def nb_errors(self, output, actual):
+        if output.size(1) > 1:
+            predict = output.argmax(1)
+        else:
+            predict = output.round()
+        error = sum(~predict.eq(actual)).item()
+        return error
+
     def train(self):
         self.model.train()
         running_loss = 0
         errors = 0
         n_samples = 0
         for i, (inps, [tgts, classes]) in enumerate(self.train_loader):
-            # origin shape: [n, 2, 14, 14]
-            # resized: [n, 2*14*14]
-            classes = classes.to(self.device)
-            inps, tgts_rescaled = self.rescale_inputs(inps, tgts)
-            tgts_rescaled.to(self.device)
-            tgts = tgts.to(self.device)
+            # Change size of inputs/labels
+            inps, tgts = self.rescale_inputs(inps, tgts)
+
             # Forward pass
             forward_outputs = self.model(inps)
+
+            # Calculate Loss and return correct outputs to calculate error
             loss, outputs = self.apply_criterion(forward_outputs,
-                                                 tgts_rescaled, classes)
-            outputs.to(self.device)
+                                                 tgts, classes)
+
             # Backward and optimize
             self.optimizer.zero_grad()
             loss.backward()
@@ -81,10 +88,9 @@ class BaseRunner(abc.ABC):
 
             # Save Info
             running_loss += loss.item()
-            errors += nb_errors(outputs, tgts)
+            errors += self.nb_errors(outputs, tgts)
             n_samples += len(tgts)
 
-        a = len(self.train_loader)
         self.train_loss.append(running_loss/len(self.train_loader))
         self.train_acc.append(1 - (errors/n_samples))
         if self.current_epoch % 10 == 0 and self.verbose == Verbosity.Full:
@@ -108,18 +114,18 @@ class BaseRunner(abc.ABC):
         n_samples = 0
         with torch.no_grad():
             for i, (inps, [tgts, classes]) in enumerate(self.test_loader):
+                # Change size of inputs/labels
                 inps, tgts = self.rescale_inputs(inps, tgts)
                 classes = classes.to(self.device)
-                tgtss = [tgts,
-                         classes[:, 0],
-                         classes[:, 1]]
+
+                # Forward and calculate loss
                 forward_outputs = self.model(inps)
                 loss, outputs = self.apply_criterion(forward_outputs,
                                                      tgts, classes)
 
                 # Save Info
                 running_loss += loss.item()
-                errors += nb_errors(outputs, tgts)
+                errors += self.nb_errors(outputs, tgts)
                 n_samples += len(tgts)
 
             self.test_loss.append(running_loss/len(self.test_loader))

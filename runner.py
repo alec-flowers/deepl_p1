@@ -97,8 +97,8 @@ class BaseRunner(abc.ABC):
         if self.current_epoch % 10 == 0 and self.verbose == Verbosity.Full:
             print(
                 f"Epoch: {self.current_epoch}" +
-                f"  Loss: {self.train_loss[self.current_epoch]:.04f}" +
-                f"  Accuracy: {self.train_acc[self.current_epoch]:.04f}")
+                f"  TRAIN Loss: {self.train_loss[self.current_epoch]:.04f}" +
+                f"  TRAIN Accuracy: {self.train_acc[self.current_epoch]:.04f}")
         if self.writer_bool:
             self.writer.add_scalar("Loss/Train",
                                    self.train_loss[self.current_epoch],
@@ -134,8 +134,8 @@ class BaseRunner(abc.ABC):
 
             if self.current_epoch % 10 == 0 and self.verbose == Verbosity.Full:
                 print(
-                    f" TRAIN_Loss: {self.test_loss[self.current_epoch]:.04f}" +
-                    f" Accuracy: {self.test_acc[self.current_epoch]:.04f}")
+                    f" TEST Loss: {self.test_loss[self.current_epoch]:.04f}" +
+                    f" TEST Accuracy: {self.test_acc[self.current_epoch]:.04f}")
             if self.writer_bool:
                 self.writer.add_scalar("Loss/Test",
                                        self.test_loss[self.current_epoch],
@@ -321,6 +321,8 @@ class CNNClassifierComparerRunner(BaseRunner):
                          verbose)
 
     def apply_criterion(self, forward_outputs, tgts, classes):
+        tgts = tgts.to(self.device)
+        classes = classes.to(self.device)
         tgtss = [tgts,
                  classes[:, 0],
                  classes[:, 1]]
@@ -332,6 +334,7 @@ class CNNClassifierComparerRunner(BaseRunner):
 
     def rescale_inputs(self, inps, tgts):
         #inps = inps.reshape(-1, 2, 14, 14).to(self.device).float()
+        inps = inps.to(self.device).float()
         tgts = tgts.to(self.device).reshape(-1, 1).float()
         return inps, tgts
 

@@ -277,7 +277,13 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
         return inps, tgts
 
     def graph_plot(self):
-        pass
+        examples = iter(self.train_loader)
+        example_data, example_targets = examples.next()
+        if self.writer_bool:
+            with SummaryWriter(comment='classifier_comparer') as w:
+                self.writer.add_graph(
+                    self.model,
+                    example_data.reshape(-1, 2, 14 * 14).to(self.device))
 
 # class CNNRunner(BaseRunner):
 #     def __init__(self, model, criterion, optimizer,
@@ -305,6 +311,7 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
 #                 self.writer.add_graph(
 #                     self.model,
 #                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
+
 
 class CNNClassifierComparerRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer,
@@ -345,4 +352,4 @@ class CNNClassifierComparerRunner(BaseRunner):
             with SummaryWriter(comment='classifier_comparer') as w:
                 self.writer.add_graph(
                     self.model,
-                    example_data.reshape(-1, 2, 14 * 14).to(self.device))
+                    example_data.to(self.device))

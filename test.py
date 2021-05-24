@@ -6,7 +6,7 @@ from net import *
 from utils import report_from, Verbosity
 verbose = Verbosity.Full
 
-tensorboard_output = False
+tensorboard_output = True
 if tensorboard_output:
     os.system('rm -rf ./runs &')
     os.system('tensorboard --logdir=runs &')

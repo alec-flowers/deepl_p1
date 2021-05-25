@@ -14,7 +14,7 @@ class BaseRunner(abc.ABC):
                  epochs,
                  batch_size,
                  name,
-                 weights=[1.0],
+                 weights=[1.0, 1.0, 1.0],
                  writer_bool=False,
                  verbose=Verbosity.No):
 
@@ -247,7 +247,8 @@ class MLPClassifierComparerRunner(BaseRunner):
 
 class MLPClassifierComparerRunnerAux(BaseRunner):
     def __init__(self, model, criterion, optimizer,
-                 epochs, batch_size, name, weights=[1.0],
+                 epochs, batch_size, name,
+                 weights=[1.0, 1.0, 1.0],
                  writer_bool=False, verbose=Verbosity.No):
         super().__init__(model,
                          criterion,
@@ -258,6 +259,7 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
                          weights,
                          writer_bool,
                          verbose)
+        self.weights = weights
 
     def apply_criterion(self, forward_outputs, tgts, classes):
         tgts = tgts.to(self.device)
@@ -267,7 +269,7 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
                  classes[:, 1]]
         loss = torch.Tensor([0.0]).to(self.device)
         for i, outputs in enumerate(forward_outputs):
-            loss += self.criterion[i](outputs, tgtss[i])
+            loss += self.weights[i] * self.criterion[i](outputs, tgtss[i])
         ret_output = forward_outputs[0].to(self.device)
         return loss, ret_output
 

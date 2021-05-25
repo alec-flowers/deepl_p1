@@ -78,15 +78,16 @@ def plot_outputs_single_network_arch_from_list(
         counter = j % 4
         NN_type = int(j / 4)
         ax = plt.subplot(2, 2, counter+1)
+        handles, labels = [], []
         for i, key in enumerate(output_val):
             this_label = out_key + label + key
             plot_bool = False
-            handles, labels = [], []
             if list_labels == None:
                 plot_bool = True
             else:
                 if this_label in list_labels:
                     plot_bool = True
+
             if plot_bool:
                 ax.plot(output_val[key],
                         label=this_label,

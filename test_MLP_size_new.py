@@ -21,7 +21,7 @@ lr = 5e-5
 batch_size = 100
 
 
-def train_test_plot(hidden_size_list, epochs, list_archs_for_plot, filename):
+def do_train_test(hidden_size_list, epochs, filename):
     MLP_outputs = {}
     MLP_train_losses = {}
     MLP_test_losses = {}
@@ -141,14 +141,26 @@ def train_test_plot(hidden_size_list, epochs, list_archs_for_plot, filename):
     outputs.update(MLP_outputs)
     outputs.update(CC_outputs)
     outputs.update(CC_AUX_outputs)
-    my_net_len=len(hidden_size)
-    plot_outputs_single_network_arch_from_list(
-        filename,
-        outputs,
-        f"MLP Neural Networks Different Architectures with {my_net_len} Hidden Layers ",
-        " 196_",
-        epochs)
+    return outputs
 
+
+num_epochs = [200, 500, 1000]
+layers_to_check = [2, 3, 4]
+outputs = {}
+for layers, epochs in zip(layers_to_check, num_epochs):
+    hidden_sizes_list = []
+    filename = f"MLP_{layers}_LAYER_ARCHS"
+    hidden_sizes_list = []
+    layer_widths = [200, 300, 400, 500, 600]
+    for lw in layer_widths:
+        hidden_sizes_list.append([lw] * (layers-1) + [196])
+    outputs[layers] = do_train_test(hidden_sizes_list,
+                                    epochs, filename)
+
+
+def do_plots(outputs, hidden_size_list, epochs, list_archs_for_plot, filename):
+    print(f"{list_archs_for_plot=}")
+    my_net_len = len(hidden_size_list[0])
     plot_outputs_single_network_arch_from_list(
         filename,
         outputs,
@@ -158,73 +170,36 @@ def train_test_plot(hidden_size_list, epochs, list_archs_for_plot, filename):
         list_archs_for_plot)
 
 
-list_list_arch_for_plot = [["MLP 196_600_196",
-                            "CC 196_400_196",
-                            "CC_AUX 196_300_196"],
-                           ["MLP 196_600_600_196",
-                            "CC 196_400_400_196",
-                            "CC_AUX 196_300_300_196"],
-                           ["MLP 196_600_600_600_196",
-                            "CC 196_400_400_400_196",
-                            "CC_AUX 196_300_300_300_196"]]
-num_epochs = [200, 500, 1000]
-layers_to_check = [2, 3, 4]
-
-for layers, epochs, list_arch_for_plot in zip(layers_to_check,
-                                              num_epochs,
-                                              list_list_arch_for_plot):
-    hidden_sizes_list = []
-    filename = f"MLP_{layers}_LAYER_ARCHS"
-    hidden_sizes_list = []
-    layer_widths = [200, 300, 400, 500, 600]
-    for lw in layer_widths:
-        hidden_sizes_list.append([lw] * (layers-1) + [196])
-    train_test_plot(hidden_sizes_list, epochs, list_arch_for_plot, filename)
+list_list_list_arch_for_plot = [
+    [["MLP 196_600_196", "CC 196_400_196", "CC_AUX 196_300_196"],
+     ["MLP 196_600_600_196", "CC 196_400_400_196", "CC_AUX 196_300_300_196"],
+     ["MLP 196_600_600_600_196",
+      "CC 196_400_400_400_196",
+      "CC_AUX 196_300_300_300_196"]],
+    [["MLP 196_500_196", "CC 196_400_196", "CC_AUX 196_300_196"],
+     ["MLP 196_500_500_196", "CC 196_400_400_196", "CC_AUX 196_300_300_196"],
+     ["MLP 196_500_500_500_196",
+      "CC 196_400_400_400_196",
+      "CC_AUX 196_300_300_300_196"]],
+    [["MLP 196_500_196", "CC 196_400_196", "CC_AUX 196_300_196"],
+     ["MLP 196_500_500_196", "CC 196_400_400_196", "CC_AUX 196_300_300_196"],
+     ["MLP 196_500_500_500_196",
+      "CC 196_400_400_400_196",
+      "CC_AUX 196_300_300_300_196"]]]
 
 
-list_list_arch_for_plot = [["MLP 196_500_196",
-                            "CC 196_400_196",
-                            "CC_AUX 196_300_196"],
-                           ["MLP 196_500_500_196",
-                            "CC 196_400_400_196",
-                            "CC_AUX 196_300_300_196"],
-                           ["MLP 196_500_500_500_196",
-                            "CC 196_400_400_400_196",
-                            "CC_AUX 196_300_300_300_196"]]
-num_epochs = [200, 500, 1000]
-layers_to_check = [2, 3, 4]
-
-for layers, epochs, list_arch_for_plot in zip(layers_to_check,
-                                              num_epochs,
-                                              list_list_arch_for_plot):
-    hidden_sizes_list = []
-    filename = f"MLP_{layers}_LAYER_ARCHS"
-    hidden_sizes_list = []
-    layer_widths = [200, 300, 400, 500, 600]
-    for lw in layer_widths:
-        hidden_sizes_list.append([lw] * (layers-1) + [196])
-    train_test_plot(hidden_sizes_list, epochs, list_arch_for_plot, filename)
-
-
-list_list_arch_for_plot = [["MLP 196_600_196",
-                            "CC 196_400_196",
-                            "CC_AUX 196_300_196"],
-                           ["MLP 196_600_600_196",
-                            "CC 196_400_400_196",
-                            "CC_AUX 196_300_300_196"],
-                           ["MLP 196_600_600_600_196",
-                            "CC 196_400_400_400_196",
-                            "CC_AUX 196_300_300_300_196"]]
-num_epochs = [200, 500, 1000]
-layers_to_check = [2, 3, 4]
-
-for layers, epochs, list_arch_for_plot in zip(layers_to_check,
-                                              num_epochs,
-                                              list_list_arch_for_plot):
-    hidden_sizes_list = []
-    filename = f"MLP_{layers}_LAYER_ARCHS"
-    hidden_sizes_list = []
-    layer_widths = [200, 300, 400, 500, 600]
-    for lw in layer_widths:
-        hidden_sizes_list.append([lw] * (layers-1) + [196])
-    train_test_plot(hidden_sizes_list, epochs, list_arch_for_plot, filename)
+for i, list_list_arch_for_plot in enumerate(list_list_list_arch_for_plot):
+    for layers, epochs, list_arch_for_plot in zip(layers_to_check,
+                                                  num_epochs,
+                                                  list_list_arch_for_plot):
+        hidden_sizes_list = []
+        filename = f"MLP_{layers}_LAYER_ARCHS"
+        hidden_sizes_list = []
+        layer_widths = [200, 300, 400, 500, 600]
+        for lw in layer_widths:
+            hidden_sizes_list.append([lw] * (layers-1) + [196])
+        if i == 0:
+            do_plots(outputs[layers], hidden_sizes_list,
+                     epochs, None, filename)
+        do_plots(outputs[layers], hidden_sizes_list,
+                 epochs, list_arch_for_plot, filename)

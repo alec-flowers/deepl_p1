@@ -29,7 +29,7 @@ hidden_sizes_list =  [[600, 600, 196],
 #     optimizer_mlp = torch.optim.Adam(model_CNN.parameters(), lr=lr)
 #     criterion_mlp = nn.BCELoss()
 #
-#     MLP = ConvRunner(model_CNN, [criterion_mlp], optimizer_mlp,
+#     MLP = CNNRunner(model_CNN, [criterion_mlp], optimizer_mlp,
 #                 epochs, batch_size,
 #                 name=f'CNN_vanilla_{i}', weights=[1.0],
 #                 writer_bool=tensorboard_output, verbose=verbose)
@@ -44,7 +44,7 @@ for i in range(test_rounds):
     optimizer_cc = torch.optim.Adam(model_CNN_cc.parameters(), lr=lr)
     criterion_cc = nn.BCELoss()
 
-    CNN_CC = ConvRunner(
+    CNN_CC = CNNRunner(
     model_CNN_cc, [criterion_cc], optimizer_cc,
     epochs, batch_size,
     name=f'CNN_classifier_comparer_{i}',

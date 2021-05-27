@@ -159,7 +159,7 @@ class BaseRunner(abc.ABC):
         pass
 
 
-class ConvRunner(BaseRunner):
+class CNNRunner(BaseRunner):
     def __init__(self, model, criterion, optimizer, epochs,
                  batch_size, name, weights=[1.0],
                  writer_bool=False, verbose=Verbosity.No):
@@ -287,34 +287,6 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
                 self.writer.add_graph(
                     self.model,
                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
-
-# class CNNRunner(BaseRunner):
-#     def __init__(self, model, criterion, optimizer,
-#                  epochs, batch_size, name, weights=[1.0], writer_bool=False, verbose=Verbosity.No):
-#         super().__init__(model,
-#                          criterion,
-#                          optimizer,
-#                          epochs,
-#                          batch_size,
-#                          name,
-#                          weights,
-#                          writer_bool,
-#                          verbose)
-#
-#     def rescale_inputs(self, inps, tgts):
-#         #inps = inps.reshape(-1, 2, 14, 14).to(self.device).float()
-#         tgts = tgts.to(self.device).reshape(-1, 1).float()
-#         return inps, tgts
-#
-#     def graph_plot(self):
-#         examples = iter(self.train_loader)
-#         example_data, example_targets = examples.next()
-#         if self.writer_bool:
-#             with SummaryWriter(comment='classifier_comparer') as w:
-#                 self.writer.add_graph(
-#                     self.model,
-#                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
-
 
 class CNNClassifierComparerRunnerAux(BaseRunner):
     def __init__(self, model, criterion, optimizer,

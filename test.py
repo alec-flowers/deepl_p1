@@ -29,7 +29,7 @@ for i in range(test_rounds):
     optimizer_mlp = torch.optim.Adam(model_CNN.parameters(), lr=lr)
     criterion_mlp = nn.BCELoss()
 
-    MLP = ConvRunner(model_CNN, [criterion_mlp], optimizer_mlp,
+    MLP = CNNRunner(model_CNN, [criterion_mlp], optimizer_mlp,
                 epochs, batch_size,
                 name=f'CNN_VANILLA_{i}', weights=[1.0],
                 writer_bool=tensorboard_output, verbose=verbose)
@@ -116,7 +116,7 @@ report_from(CNN_CC_run_output, "CNN_classifier_comparer")
 #     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 #     criterion = nn.CrossEntropyLoss()
 #
-#     base = ConvRunner(model, criterion, optimizer, None, epochs, batch_size)
+#     base = CNNRunner(model, criterion, optimizer, None, epochs, batch_size)
 #     base.run()
 
 # test_rounds = 3

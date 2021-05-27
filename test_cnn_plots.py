@@ -32,7 +32,7 @@ def do_train_test(epochs, filename):
         optimizer_CNN = torch.optim.Adam(model_CNN.parameters(), lr=lr)
         criterion_CNN = nn.BCELoss()
 
-        CNN = ConvRunner(model_CNN, [criterion_CNN], optimizer_CNN,
+        CNN = CNNRunner(model_CNN, [criterion_CNN], optimizer_CNN,
                         epochs, batch_size,
                         name=f'CNN_VANILLA',
                         weights=[1.0, 1.0, 1.0],
@@ -61,7 +61,7 @@ def do_train_test(epochs, filename):
         optimizer_cc = torch.optim.Adam(model_cc.parameters(), lr=lr)
         criterion_cc = nn.BCELoss()
 
-        CC = ConvRunner(
+        CC = CNNRunner(
             model_cc, [criterion_cc], optimizer_cc,
             epochs, batch_size,
             name=f'CNN_classifier_comparer',

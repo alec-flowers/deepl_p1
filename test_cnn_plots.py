@@ -4,7 +4,7 @@ from torch import nn
 from runner import *
 from net import *
 from utils import report_from, Verbosity, list_to_string,\
-    plot_outputs_single_network_arch_from_list
+    plot_outputs_single_network_arch_from_list_cnn
 import pickle
 
 verbose = Verbosity.No
@@ -132,4 +132,4 @@ if __name__ == '__main__':
     # outputs = pickle.load(a_file)
     # a_file.close()
     #
-    # plot_outputs_single_network_arch_from_list('CNN_Plots', outputs['200'], 'CNN Different Architectures', 'CNN', 100)
+    # plot_outputs_single_network_arch_from_list_cnn('CNN_Plots', outputs['100'], 'CNN Different Architectures', 'CNN', 100)

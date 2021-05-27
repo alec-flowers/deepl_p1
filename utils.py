@@ -70,8 +70,61 @@ def list_to_string(input_list):
     # return string
     return return_string
 
-
 def plot_outputs_single_network_arch_from_list(
+        filename_inp, outputs, title, label,
+        epochs, list_labels=None):
+    fig1 = plt.figure(figsize=[24, 12])
+    titles = ["train loss", "test loss",
+              "train accuracy", "test accuracy"]
+    linestyles = ["-", ":", "-.", "--"]
+
+    for j, output_key in enumerate(outputs):
+        output_val = outputs[output_key]
+        out_key = output_key.replace('_train_accs', "")
+        out_key = out_key.replace('_test_accs', "")
+        out_key = out_key.replace('_test_losses', "")
+        out_key = out_key.replace('_train_losses', "")
+        if out_key.find("MLP"):
+            label_legend = " 196_"
+        else:
+            label_legend = " 392_"
+        counter = j % 4
+        NN_type = int(j / 4)
+        ax = plt.subplot(2, 2, counter+1)
+        handles, labels = [], []
+        for i, key in enumerate(output_val):
+            this_label = out_key + label + key
+            this_label_legend = out_key + label_legend + key
+            plot_bool = False
+            if list_labels == None:
+                plot_bool = True
+            else:
+                if this_label in list_labels:
+                    plot_bool = True
+
+            if plot_bool:
+                ax.plot(output_val[key],
+                        label=this_label_legend,
+                        ls=linestyles[NN_type], lw=3.)
+                ax.set_title(titles[counter])
+                handles, labels = ax.get_legend_handles_labels()
+                ax.grid("Major")
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                ax.set_xlim([0, epochs])
+                if counter > 1:
+                    ax.set_ylim([0.3, 1.0])
+    fig1.suptitle(title, fontsize=32)
+    fig1.legend(handles, labels, bbox_to_anchor=(
+        1.25, 0.5), loc='center right', fontsize=28)
+    if list_labels == None:
+        filename = filename_inp + ".svg"
+    else:
+        filename = filename_inp + list_to_string(list_labels) + ".svg"
+    fig1.savefig(filename, format="svg", bbox_inches="tight")
+    # plt.show()
+
+
+def plot_outputs_single_network_arch_from_list_cnn(
         filename_inp, outputs, title, label,
         epochs, list_labels=None):
     fig1 = plt.figure(figsize=[24, 12])

@@ -51,7 +51,7 @@ def do_train_test(hidden_size_list, epochs, filename):
                            "MLP_test_losses": MLP_test_losses,
                            "MLP_train_accs": MLP_train_accs,
                            "MLP_test_accs": MLP_test_accs}
-        report_from(MLP_run_output, f"MLP_VANILLA_{hidden_size}")
+        report_from(MLP_run_output, model_mlp, f"MLP_VANILLA_{hidden_size}")
         # plot_outputs_single_network_arch(MLP_outputs,
         #                                  "Vanilla MLP NNs",
         #                                  "MLP 196_")
@@ -87,7 +87,8 @@ def do_train_test(hidden_size_list, epochs, filename):
                           "CC_test_losses": CC_test_losses,
                           "CC_train_accs": CC_train_accs,
                           "CC_test_accs": CC_test_accs}
-        report_from(CC_run_output, f"MLP_classifier_comparer_{hidden_size}")
+        report_from(CC_run_output, model_cc,
+                    f"MLP_classifier_comparer_{hidden_size}")
         # plot_outputs_single_network_arch(CC_outputs,
         #                                  "MLP Classifier Comaparer NNs",
         #                                  "MLP CC 196_")
@@ -131,6 +132,7 @@ def do_train_test(hidden_size_list, epochs, filename):
                               "CC_AUX_train_accs": CC_AUX_train_accs,
                               "CC_AUX_test_accs": CC_AUX_test_accs}
         report_from(CC_aux_run_output,
+                    model_cc_aux,
                     f"MLP_classifier_comparer_auxiliary_{hidden_size}")
         # plot_outputs_single_network_arch(
         #     CC_AUX_outputs,
@@ -144,8 +146,8 @@ def do_train_test(hidden_size_list, epochs, filename):
     return outputs
 
 
-num_epochs = [200, 500, 1000]
-layers_to_check = [2, 3, 4]
+num_epochs = [10, 10]
+layers_to_check = [2, 3]
 outputs = {}
 for layers, epochs in zip(layers_to_check, num_epochs):
     hidden_sizes_list = []

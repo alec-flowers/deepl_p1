@@ -30,8 +30,17 @@ class Verbosity(Enum):
     Some = 1
     No = 0
 
+def count_parameters(model):
+    total_params = 0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad: continue
+        param = parameter.numel()
+        total_params+=param
+    return total_params
 
-def report_from(run_output, name):
+
+
+def report_from(run_output, net, name):
     rounds = len(run_output)
     train_loss = torch.zeros(rounds)
     test_loss = torch.zeros(rounds)
@@ -51,6 +60,7 @@ def report_from(run_output, name):
     else:
         print(f"TRAIN ACCURACY for {name}: {mean_train_acc.item():.04f}")
         print(f"TEST ACCURACY for {name}: {mean_test_acc.item():.04f}")
+    print(f"number of parameters for {name} is {count_parameters(net)}")
     print("\n")
 
 

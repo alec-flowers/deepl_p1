@@ -19,7 +19,7 @@ class BaseRunner(abc.ABC):
                  verbose=Verbosity.No):
 
         self.device = torch.device(
-            'cuda' if torch.cuda.is_available() else 'cpu')
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
         # self.device = 'cpu'
         self.name = name
         self.model = model
@@ -74,7 +74,7 @@ class BaseRunner(abc.ABC):
         for i, (inps, [tgts, classes]) in enumerate(self.train_loader):
             # Change size of inputs/labels
             inps, tgts = self.rescale_inputs(inps, tgts)
-
+            inps =inps.to(self.device)
             # Forward pass
             forward_outputs = self.model(inps)
 
@@ -118,7 +118,8 @@ class BaseRunner(abc.ABC):
                 # Change size of inputs/labels
                 inps, tgts = self.rescale_inputs(inps, tgts)
                 classes = classes.to(self.device)
-
+                self.model = self.model.to(self.device)
+                inps = inps.cuda()
                 # Forward and calculate loss
                 forward_outputs = self.model(inps)
                 loss, outputs = self.apply_criterion(forward_outputs,

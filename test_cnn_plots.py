@@ -34,7 +34,7 @@ def do_train_test(epochs, filename):
 
         CNN = ConvRunner(model_CNN, [criterion_CNN], optimizer_CNN,
                         epochs, batch_size,
-                        name=f'MLP_VANILLA',
+                        name=f'CNN_VANILLA',
                         weights=[1.0, 1.0, 1.0],
                         writer_bool=tensorboard_output, verbose=verbose)
         CNN_run_output.append(CNN.run())
@@ -46,7 +46,7 @@ def do_train_test(epochs, filename):
                        "CNN_test_losses": CNN_test_losses,
                        "CNN_train_accs": CNN_train_accs,
                        "CNN_test_accs": CNN_test_accs}
-    report_from(CNN_run_output, f"CNN_VANILLA")
+    report_from(CNN_run_output, model_CNN, f"CNN_VANILLA")
 
     CC_outputs = {}
     CC_train_losses = {}
@@ -75,7 +75,7 @@ def do_train_test(epochs, filename):
                       "CNN_CC_test_losses": CC_test_losses,
                       "CNN_CC_train_accs": CC_train_accs,
                       "CNN_CC_test_accs": CC_test_accs}
-    report_from(CC_run_output, f"CNN_classifier_comparer")
+    report_from(CC_run_output, model_cc, f"CNN_classifier_comparer")
 
 
     CC_AUX_outputs = {}
@@ -93,7 +93,7 @@ def do_train_test(epochs, filename):
         criterion_cc_aux_main = nn.BCELoss()
         criterion_cc_aux_aux = nn.CrossEntropyLoss()
 
-        MLP_CC_aux = CNNClassifierComparerRunnerAux(
+        CNN_CC_aux = CNNClassifierComparerRunnerAux(
             model_cc_aux, [criterion_cc_aux_main,
                            criterion_cc_aux_aux,
                            criterion_cc_aux_aux], optimizer_cc_aux,
@@ -101,18 +101,18 @@ def do_train_test(epochs, filename):
             name=f'CNN_classifier_comparer_auxiliary',
             writer_bool=tensorboard_output, verbose=verbose,
             weights = [0.6, 0.2, 0.2])
-        CC_aux_run_output.append(MLP_CC_aux.run())
-        CC_AUX_train_losses['CNN_CC_AUX'] = MLP_CC_aux.train_loss
+        CC_aux_run_output.append(CNN_CC_aux.run())
+        CC_AUX_train_losses['CNN_CC_AUX'] = CNN_CC_aux.train_loss
         CC_AUX_test_losses['CNN_CC_AUX'] =\
-            MLP_CC_aux.test_loss
+            CNN_CC_aux.test_loss
         CC_AUX_train_accs['CNN_CC_AUX'] =\
-            MLP_CC_aux.train_acc
-        CC_AUX_test_accs['CNN_CC_AUX'] = MLP_CC_aux.test_acc
+            CNN_CC_aux.train_acc
+        CC_AUX_test_accs['CNN_CC_AUX'] = CNN_CC_aux.test_acc
         CC_AUX_outputs = {"CC_AUX_train_losses": CC_AUX_train_losses,
                           "CC_AUX_test_losses": CC_AUX_test_losses,
                           "CC_AUX_train_accs": CC_AUX_train_accs,
                           "CC_AUX_test_accs": CC_AUX_test_accs}
-    report_from(CC_aux_run_output,
+    report_from(CC_aux_run_output, model_cc_aux,
                 f"CNN_classifier_comparer_auxiliary")
 
     outputs = {}

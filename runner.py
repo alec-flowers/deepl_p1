@@ -315,7 +315,7 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
 #                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
 
 
-class CNNClassifierComparerRunner(BaseRunner):
+class CNNClassifierComparerRunnerAux(BaseRunner):
     def __init__(self, model, criterion, optimizer,
                  epochs, batch_size, name, weights=[1.0],
                  writer_bool=False, verbose=Verbosity.No):

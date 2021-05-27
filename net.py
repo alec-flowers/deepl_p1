@@ -240,7 +240,7 @@ class CNNClassifier(nn.Module):
             nn.Dropout(p=.25)
         )
         self.classifier = nn.Sequential(
-            #nn.Dropout(p=.5),
+            nn.Dropout(p=.5),
             nn.Linear(576, 288),
             nn.BatchNorm1d(288),
             nn.ReLU(inplace=True),
@@ -249,7 +249,7 @@ class CNNClassifier(nn.Module):
             nn.BatchNorm1d(144),
             nn.ReLU(inplace=True),
             nn.Linear(144, 10),
-            nn.Softmax(dim=0)
+            nn.Softmax()
         )
 
     def forward(self, x1, x2):
@@ -463,3 +463,44 @@ class CNNCalssifierComparerAuxLoss(nn.Module):
         tgts, labels = self.comparer(self.classifier(x[:, 0, ...],
                                                      x[:, 1, ...]))
         return tgts, labels[:, :self.num_labels], labels[:, self.num_labels:]
+
+
+class CNNCalssifierComparer(nn.Module):
+    # Fully connected neural network with one hidden layer
+    # With two submodules: 1. classifier 2. comparer
+    def __init__(self, input_size,
+                 hidden_sizes_comparer,
+                 batchnorm_comparer_bool=False,
+                 dropout_comparer_bool=False):
+        """
+        Constructor for a NN with two sub Module
+        1. Classifier 2.Comparer
+
+        :param input_size:                  The size of the input for forward parse
+        :param hidden_sizes:                List of sizes of hidden fully connected layers for classifier sub-module
+        :param hidden_sizes_comparer:       List of sizes of hidden fully connected layers for comparer sub-module
+        :param num_labels:                  The size of the output of classifier sub-module
+        :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not for classifier sub-module
+        :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not for classifier sub-module
+        :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
+        :param dropout_comparer_bool :      Boolean determining whether acitivating dropout or not for comparer sublayer
+
+        """
+        super(CNNCalssifierComparer, self).__init__()
+        self.input_size = input_size
+        self.classifier = CNNClassifier()
+        self.comparer = NeuralNetComparer(
+            input_size,
+            hidden_sizes_comparer,
+            batchnorm_comparer_bool=batchnorm_comparer_bool,
+            dropout_comparer_bool=dropout_comparer_bool)
+
+    def forward(self, x):
+        """
+        Forward pass
+
+        param x: The input of the NN, size: 2, 14*14
+        """
+        tgts, _ = self.comparer(self.classifier(x[:, 0, ...],
+                                                x[:, 1, ...]))
+        return tgts

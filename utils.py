@@ -75,24 +75,24 @@ def plot_outputs_single_network_arch_from_list(
         out_key = out_key.replace('_test_accs', "")
         out_key = out_key.replace('_test_losses', "")
         out_key = out_key.replace('_train_losses', "")
-        if out_key.find("MLP"):
-            label_legend = " 196_"
-        else:
-            label_legend = " 392_"
+        # if out_key.find("MLP"):
+        #     label_legend = " 196_"
+        # else:
+        #     label_legend = " 392_"
         counter = j % 4
         NN_type = int(j / 4)
         ax = plt.subplot(2, 2, counter+1)
         handles, labels = [], []
         for i, key in enumerate(output_val):
             this_label = out_key + label + key
-            this_label_legend = out_key + label_legend + key
+            this_label_legend = key
             plot_bool = False
             if list_labels == None:
                 plot_bool = True
             else:
                 if this_label in list_labels:
                     plot_bool = True
-
+            a = output_val[key]
             if plot_bool:
                 ax.plot(output_val[key],
                         label=this_label_legend,
@@ -106,7 +106,7 @@ def plot_outputs_single_network_arch_from_list(
                     ax.set_ylim([0.3, 1.0])
     fig1.suptitle(title, fontsize=32)
     fig1.legend(handles, labels, bbox_to_anchor=(
-        1.25, 0.5), loc='center right', fontsize=28)
+        1.10, 0.5), loc='center right', fontsize=28)
     if list_labels == None:
         filename = filename_inp + ".svg"
     else:

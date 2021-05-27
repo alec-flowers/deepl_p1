@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import matplotlib
 from matplotlib import rc
-font = {'size': 16}
+font = {'size': 26}
 matplotlib.rc('font', **font)
 
 colors = [hsv_to_rgb([(i * 0.618033988749895) % 1.0, 1, 1])
@@ -30,8 +30,17 @@ class Verbosity(Enum):
     Some = 1
     No = 0
 
+def count_parameters(model):
+    total_params = 0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad: continue
+        param = parameter.numel()
+        total_params+=param
+    return total_params
 
-def report_from(run_output, name):
+
+
+def report_from(run_output, net, name):
     rounds = len(run_output)
     train_loss = torch.zeros(rounds)
     test_loss = torch.zeros(rounds)
@@ -51,6 +60,7 @@ def report_from(run_output, name):
     else:
         print(f"TRAIN ACCURACY for {name}: {mean_train_acc.item():.04f}")
         print(f"TEST ACCURACY for {name}: {mean_test_acc.item():.04f}")
+    print(f"number of parameters for {name} is {count_parameters(net)}")
     print("\n")
 
 
@@ -62,8 +72,8 @@ def list_to_string(input_list):
 
 
 def plot_outputs_single_network_arch_from_list(
-    filename_inp, outputs, title, label,
-    epochs, list_labels=None):
+        filename_inp, outputs, title, label,
+        epochs, list_labels=None):
     fig1 = plt.figure(figsize=[24, 12])
     titles = ["train loss", "test loss",
               "train accuracy", "test accuracy"]
@@ -75,12 +85,17 @@ def plot_outputs_single_network_arch_from_list(
         out_key = out_key.replace('_test_accs', "")
         out_key = out_key.replace('_test_losses', "")
         out_key = out_key.replace('_train_losses', "")
+        if out_key.find("MLP"):
+            label_legend = " 196_"
+        else:
+            label_legend = " 392_"
         counter = j % 4
         NN_type = int(j / 4)
         ax = plt.subplot(2, 2, counter+1)
         handles, labels = [], []
         for i, key in enumerate(output_val):
             this_label = out_key + label + key
+            this_label_legend = out_key + label_legend + key
             plot_bool = False
             if list_labels == None:
                 plot_bool = True
@@ -90,8 +105,8 @@ def plot_outputs_single_network_arch_from_list(
 
             if plot_bool:
                 ax.plot(output_val[key],
-                        label=this_label,
-                        ls=linestyles[NN_type])
+                        label=this_label_legend,
+                        ls=linestyles[NN_type], lw=3.)
                 ax.set_title(titles[counter])
                 handles, labels = ax.get_legend_handles_labels()
                 ax.grid("Major")
@@ -99,9 +114,9 @@ def plot_outputs_single_network_arch_from_list(
                 ax.set_xlim([0, epochs])
                 if counter > 1:
                     ax.set_ylim([0.3, 1.0])
-    fig1.suptitle(title, fontsize=22)
+    fig1.suptitle(title, fontsize=32)
     fig1.legend(handles, labels, bbox_to_anchor=(
-        1.1, 0.5), loc='center right', fontsize=18)
+        1.25, 0.5), loc='center right', fontsize=28)
     if list_labels == None:
         filename = filename_inp + ".svg"
     else:

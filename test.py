@@ -14,7 +14,7 @@ import pickle
 verbose = Verbosity.No
 
 
-# tensorboard_output( Boolean) if set to  True it makes Tensorboard output
+# tensorboard_output(Boolean) if set to  True it makes Tensorboard output
 # in which one  can see the learning curves as well as schematic of the networks
 # while the test.py, you will be provided with a link address in the terminal
 # simply copy that into your favorite browser and you can visualize the network
@@ -32,9 +32,10 @@ if tensorboard_output:
 test_rounds = 10
 lr = 1e-4
 batch_size = 100
-num_epochs = 10
-layers = 3
-layer_widths = [300, 400, 600]
+num_epochs = 100
+layers = 3  # number of hidden layers for MLPs
+layer_widths = [300, 400, 600]  # width of fully connected layers for MLPs
+hidden_sizes_comparer = [80, 80, 20]  # the size of hidden layers of compararer
 ###########################################################################
 
 
@@ -70,7 +71,6 @@ def do_mlp_train_test_report(hidden_size_list, epochs, filename):
             MLP = MLPRunner(model_mlp, [criterion_mlp], optimizer_mlp,
                             epochs, batch_size,
                             name=f'MLP_VANILLA_{i}_{hidden_size}',
-                            weights=[1.0, 1.0, 1.0],
                             writer_bool=tensorboard_output, verbose=verbose)
             # saving outputs in each test round
             MLP_run_output.append(MLP.run())
@@ -92,7 +92,7 @@ def do_mlp_train_test_report(hidden_size_list, epochs, filename):
             model_cc = NeuralNetCalssifierComparer(
                 input_size_cc,
                 hidden_size,
-                hidden_sizes_comparer=[80, 80, 20],
+                hidden_sizes_comparer=hidden_sizes_comparer,
                 batchnorm_classifer_bool=True,
                 dropout_classifier_bool=True)
             # creating the optimizer
@@ -124,7 +124,7 @@ def do_mlp_train_test_report(hidden_size_list, epochs, filename):
             model_cc_aux = NeuralNetCalssifierComparerAuxLoss(
                 input_size_cc,
                 hidden_size,
-                hidden_sizes_comparer=[80, 80, 20],
+                hidden_sizes_comparer=hidden_sizes_comparer,
                 batchnorm_classifer_bool=True,
                 dropout_classifier_bool=True)
             optimizer_cc_aux = torch.optim.Adam(
@@ -178,7 +178,6 @@ def do_cnn_train_test_report(epochs, filename):
         CNN = CNNRunner(model_CNN, [criterion_CNN], optimizer_CNN,
                         epochs, batch_size,
                         name=f'CNN_VANILLA',
-                        weights=[1.0, 1.0, 1.0],
                         writer_bool=tensorboard_output, verbose=verbose)
         # saving outputs in each test round
         CNN_run_output.append(CNN.run())
@@ -196,8 +195,9 @@ def do_cnn_train_test_report(epochs, filename):
     CNN_CCrun_output = []
     for i in range(test_rounds):
         # creating the network
-        model_CNN_CC = CNNCalssifierComparer(input_size_CC,
-                                             hidden_sizes_comparer=[80, 80, 20])
+        model_CNN_CC = CNNCalssifierComparer(
+            input_size_CC,
+            hidden_sizes_comparer=hidden_sizes_comparer)
         # creating the optimizer
         optimizer_CC = torch.optim.Adam(model_CNN_CC.parameters(), lr=lr)
         # creating loss criterion
@@ -227,7 +227,7 @@ def do_cnn_train_test_report(epochs, filename):
         # creating the network
         model_CNN_CC_AUX = CNNCalssifierComparerAuxLoss(
             input_size_CC,
-            hidden_sizes_comparer=[80, 80, 20])
+            hidden_sizes_comparer=hidden_sizes_comparer)
         # creating the optimizer
         optimizer_CC_AUX = torch.optim.Adam(
             model_CNN_CC_AUX.parameters(), lr=lr)
@@ -263,7 +263,7 @@ def do_cnn_train_test_report(epochs, filename):
 
 if __name__ == '__main__':
     # calling MLP architectures' train, test, and report
-    MLP_outpurs={}
+    MLP_outputs = {}
     for layer_width in layer_widths:
         hidden_sizes_list = []
         filename = f"MLP_{layers}_LAYER_ARCHS"

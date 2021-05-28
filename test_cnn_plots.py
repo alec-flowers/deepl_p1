@@ -56,13 +56,13 @@ def do_train_test(epochs, filename):
     CC_run_output = []
     for i in range(test_rounds):
         input_size_cc = 14 * 14
-        model_cc = CNNCalssifierComparer(input_size_cc,
+        model_CNN_cc = CNNCalssifierComparer(input_size_cc,
                                              hidden_sizes_comparer=[80, 80, 20])
-        optimizer_cc = torch.optim.Adam(model_cc.parameters(), lr=lr)
+        optimizer_cc = torch.optim.Adam(model_CNN_cc.parameters(), lr=lr)
         criterion_cc = nn.BCELoss()
 
         CC = CNNRunner(
-            model_cc, [criterion_cc], optimizer_cc,
+            model_CNN_cc, [criterion_cc], optimizer_cc,
             epochs, batch_size,
             name=f'CNN_classifier_comparer',
             writer_bool=tensorboard_output, verbose=verbose)
@@ -75,7 +75,7 @@ def do_train_test(epochs, filename):
                       "CNN_CC_test_losses": CC_test_losses,
                       "CNN_CC_train_accs": CC_train_accs,
                       "CNN_CC_test_accs": CC_test_accs}
-    report_from(CC_run_output, model_cc, f"CNN_classifier_comparer")
+    report_from(CC_run_output, model_CNN_cc, f"CNN_classifier_comparer")
 
 
     CC_AUX_outputs = {}
@@ -85,16 +85,16 @@ def do_train_test(epochs, filename):
     CC_AUX_test_accs = {}
     CC_aux_run_output = []
     for i in range(test_rounds):
-        model_cc_aux = CNNCalssifierComparerAuxLoss(
+        model_CNN_cc_aux = CNNCalssifierComparerAuxLoss(
             input_size_cc,
             hidden_sizes_comparer=[80, 80, 20])
         optimizer_cc_aux = torch.optim.Adam(
-            model_cc_aux.parameters(), lr=lr)
+            model_CNN_cc_aux.parameters(), lr=lr)
         criterion_cc_aux_main = nn.BCELoss()
         criterion_cc_aux_aux = nn.CrossEntropyLoss()
 
         CNN_CC_aux = CNNClassifierComparerRunnerAux(
-            model_cc_aux, [criterion_cc_aux_main,
+            model_CNN_cc_aux, [criterion_cc_aux_main,
                            criterion_cc_aux_aux,
                            criterion_cc_aux_aux], optimizer_cc_aux,
             epochs, batch_size,
@@ -112,7 +112,7 @@ def do_train_test(epochs, filename):
                           "CC_AUX_test_losses": CC_AUX_test_losses,
                           "CC_AUX_train_accs": CC_AUX_train_accs,
                           "CC_AUX_test_accs": CC_AUX_test_accs}
-    report_from(CC_aux_run_output, model_cc_aux,
+    report_from(CC_aux_run_output, model_CNN_cc_aux,
                 f"CNN_classifier_comparer_auxiliary")
 
     outputs = {}

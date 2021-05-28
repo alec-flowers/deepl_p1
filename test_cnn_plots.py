@@ -169,7 +169,7 @@ def do_cnn_train_test_report(epochs, filename):
     CNN_run_output = []
     for i in range(test_rounds):
         # creating the network
-        model_CNN = ConvNet4()
+        model_CNN = ConvNet_VGG()
         # creating the optimizer
         optimizer_CNN = torch.optim.Adam(model_CNN.parameters(), lr=lr)
         # creating loss criterion

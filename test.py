@@ -21,7 +21,7 @@ verbose = Verbosity.No
 # while the test.py, you will be provided with a link address in the terminal
 # simply copy that into your favorite browser and you can visualize the network
 # and its training curves
-tensorboard_output = True
+tensorboard_output = False
 if tensorboard_output and tensorborad_found:
     # these shell commands get tensorboard up and running
     os.system('rm -rf ./runs >> /dev/null&')
@@ -140,6 +140,11 @@ def do_mlp_train_test_report(hidden_sizes_list,
                               "CC_AUX_test_accs": {list_to_string(hidden_size): MLP_CC_aux.test_acc}}
         report_from(CC_aux_run_output, model_cc_aux,
                     f"MLP_classifier_comparer_auxiliary_{hidden_size}")
+    outputs = {}
+    outputs.update(MLP_outputs)
+    outputs.update(CC_outputs)
+    outputs.update(CC_AUX_outputs)
+    return outputs
 
 
 ##########################################################################
@@ -263,12 +268,13 @@ if __name__ == '__main__':
     layers = 3
     layer_widths = [300, 400, 600]
     epochs = 10
-
+    hidden_sizes_list = []
     MLP_outputs = {}
     for layer_width in layer_widths:
-        hidden_sizes_list = []
         hidden_sizes_list.append([layer_width] * (layers-1) + [196])
-        MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list=hidden_sizes_list, epochs=epochs)
+        MLP_outputs[layers] = \
+            do_mlp_train_test_report(hidden_sizes_list=hidden_sizes_list,
+                                     epochs=epochs)
 
     # calling CNN architectures' train, test, and report
     outputs = {}

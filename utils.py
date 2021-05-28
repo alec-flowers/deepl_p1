@@ -107,12 +107,7 @@ def plot_outputs_single_network_arch_from_list(
         for i, key in enumerate(output_val):
             this_label = out_key + label + key
             this_label_legend = out_key + label_legend + key
-            plot_bool = False
-            if list_labels == None:
-                plot_bool = True
-            else:
-                if this_label in list_labels:
-                    plot_bool = True
+            plot_bool = True
 
             if plot_bool:
                 ax.plot(output_val[key],

@@ -14,23 +14,19 @@ colors = [hsv_to_rgb([(i * 0.618033988749895) % 1.0, 1, 1])
 plt.rc('axes', prop_cycle=(cycler('color', colors)))
 
 
-class DummySummaryWriter:
-    def __init__(*args, **kwargs):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        return self
-
-    def __getattr__(self, *args, **kwargs):
-        return self
-
-
 class Verbosity(Enum):
+    """
+    Enumerator class for verbosity label.
+    """
     Full = 2
     Some = 1
     No = 0
 
+
 def count_parameters(model):
+    """
+    Count parameters in a model
+    """
     total_params = 0
     for name, parameter in model.named_parameters():
         if not parameter.requires_grad: continue
@@ -41,6 +37,13 @@ def count_parameters(model):
 
 
 def report_from(run_output, net, name):
+    """
+    Creates average and standard deviation report for multiple runs.
+    :param run_output:                  output from the run function
+    :param net:                         model used in order to count the parameters
+    :param name:                        name of model
+    :return:
+    """
     rounds = len(run_output)
     train_loss = torch.zeros(rounds)
     test_loss = torch.zeros(rounds)
@@ -73,6 +76,15 @@ def list_to_string(input_list):
 def plot_outputs_single_network_arch_from_list(
         filename_inp, outputs, title, label,
         epochs, list_labels=None):
+    """
+    Helper function used to generate plots from the report. This generates the MLP Plots.
+    :param filename_inp:                name of save file
+    :param outputs:                     dict of dict of dict with data
+    :param title:                       overall title of the plots
+    :param label:                       labels to add into legend of plot
+    :param epochs:                      number of epochs to visualize
+    :param list_labels:                 list of labels to overwrite in legend of plot
+    """
     fig1 = plt.figure(figsize=[24, 12])
     titles = ["train loss", "test loss",
               "train accuracy", "test accuracy"]
@@ -121,12 +133,21 @@ def plot_outputs_single_network_arch_from_list(
     else:
         filename = filename_inp + list_to_string(list_labels) + ".svg"
     fig1.savefig(filename, format="svg", bbox_inches="tight")
-    # plt.show()
+    plt.show()
 
 
 def plot_outputs_single_network_arch_from_list_cnn(
         filename_inp, outputs, title, label,
         epochs, list_labels=None):
+    """
+    Helper function used to generate plots from the report. This generates the CNN Plots.
+    :param filename_inp:                name of save file
+    :param outputs:                     dict of dict of dict with data
+    :param title:                       overall title of the plots
+    :param label:                       labels to add into legend of plot
+    :param epochs:                      number of epochs to visualize
+    :param list_labels:                 list of labels to overwrite in legend of plot
+    """
     fig1 = plt.figure(figsize=[24, 12])
     titles = ["train loss", "test loss",
               "train accuracy", "test accuracy"]
@@ -138,10 +159,7 @@ def plot_outputs_single_network_arch_from_list_cnn(
         out_key = out_key.replace('_test_accs', "")
         out_key = out_key.replace('_test_losses', "")
         out_key = out_key.replace('_train_losses', "")
-        # if out_key.find("MLP"):
-        #     label_legend = " 196_"
-        # else:
-        #     label_legend = " 392_"
+
         counter = j % 4
         NN_type = int(j / 4)
         ax = plt.subplot(2, 2, counter+1)
@@ -175,4 +193,4 @@ def plot_outputs_single_network_arch_from_list_cnn(
     else:
         filename = filename_inp + list_to_string(list_labels) + ".svg"
     fig1.savefig(filename, format="svg", bbox_inches="tight")
-    # plt.show()
+    plt.show()

@@ -1,12 +1,8 @@
 # importing packages and methods from other files in the module
 import os
-import torch
-from torch import nn
 from runner import *
 from net import *
-from utils import report_from, Verbosity, list_to_string,\
-    plot_outputs_single_network_arch_from_list_cnn,\
-    plot_outputs_single_network_arch_from_list_cnn
+from utils import report_from, Verbosity
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -35,10 +31,10 @@ if tensorboard_output and tensorborad_found:
 ###########################################################################
 ########################### HYPER PARAMETERS ##############################
 ###########################################################################
-test_rounds = 10
+test_rounds = 2
 lr = 1e-4
 batch_size = 100
-num_epochs = 100
+num_epochs = 10
 layers = 3  # number of hidden layers for MLPs
 layer_widths = [300, 400, 600]  # width of fully connected layers for MLPs
 hidden_sizes_comparer = [80, 80, 20]  # the size of hidden layers of compararer
@@ -282,10 +278,3 @@ if __name__ == '__main__':
     filename = f"CNN_ARCHS"
     outputs[str(num_epochs)] = \
         do_cnn_train_test_report(num_epochs, filename)
-
-    for layer_width in layer_widths:
-        hidden_sizes_list = []
-        filename = f"MLP_{layers}_LAYER_ARCHS"
-        hidden_sizes_list.append([layer_width] * (layers-1) + [196])
-        MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list,
-                                                       num_epochs, filename)

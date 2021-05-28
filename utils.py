@@ -5,7 +5,7 @@ from enum import Enum
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import matplotlib
-from matplotlib import rc
+
 font = {'size': 26}
 matplotlib.rc('font', **font)
 

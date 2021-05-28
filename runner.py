@@ -164,7 +164,7 @@ class BaseRunner(abc.ABC):
                 inps, tgts = self.rescale_inputs(inps, tgts)
                 classes = classes.to(self.device)
                 self.model = self.model.to(self.device)
-                inps = inps.cuda()
+                inps = inps.to(self.device)
 
                 # Forward and calculate loss
                 forward_outputs = self.model(inps)

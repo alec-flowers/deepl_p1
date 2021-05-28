@@ -2,7 +2,7 @@
 import os
 from runner import *
 from net import *
-from utils import report_from, Verbosity
+from utils import report_from, Verbosity, list_to_string
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -67,10 +67,10 @@ def do_mlp_train_test_report(hidden_sizes_list,
                             writer_bool=tensorboard_output, verbose=verbose)
             # saving outputs in each test round
             MLP_run_output.append(MLP.run())
-            MLP_outputs = {"MLP_train_losses": MLP.train_loss,
-                           "MLP_test_losses": MLP.test_loss,
-                           "MLP_train_accs": MLP.train_acc,
-                           "MLP_test_accs": MLP.test_acc}
+            MLP_outputs = {"MLP_train_losses": {list_to_string(hidden_size): MLP.train_loss},
+                           "MLP_test_losses": {list_to_string(hidden_size): MLP.test_loss},
+                           "MLP_train_accs": {list_to_string(hidden_size): MLP.train_acc},
+                           "MLP_test_accs": {list_to_string(hidden_size): MLP.test_acc}}
         # reporting from the outputs saved
         report_from(MLP_run_output, model_mlp,
                     f"MLP_VANILLA_{hidden_size}")
@@ -100,10 +100,10 @@ def do_mlp_train_test_report(hidden_sizes_list,
                 name=f'MLP_classifier_comparer_{i}_{hidden_size}',
                 writer_bool=tensorboard_output, verbose=verbose)
             CC_run_output.append(CC.run())
-            CC_outputs = {"CC_train_losses": CC.train_loss,
-                          "CC_test_losses": CC.test_loss,
-                          "CC_train_accs": CC.train_acc,
-                          "CC_test_accs": CC.test_acc}
+            CC_outputs = {"CC_train_losses": {list_to_string(hidden_size): CC.train_loss},
+                          "CC_test_losses": {list_to_string(hidden_size): CC.test_loss},
+                          "CC_train_accs": {list_to_string(hidden_size): CC.train_acc},
+                          "CC_test_accs": {list_to_string(hidden_size): CC.test_acc}}
         report_from(CC_run_output, model_cc,
                     f"MLP_classifier_comparer_{hidden_size}")
 
@@ -134,10 +134,10 @@ def do_mlp_train_test_report(hidden_sizes_list,
                 writer_bool=tensorboard_output, verbose=verbose,
                 weights=[0.6, 0.2, 0.2])
             CC_aux_run_output.append(MLP_CC_aux.run())
-            CC_AUX_outputs = {"CC_AUX_train_losses": MLP_CC_aux.train_loss,
-                              "CC_AUX_test_losses": MLP_CC_aux.test_loss,
-                              "CC_AUX_train_accs": MLP_CC_aux.train_acc,
-                              "CC_AUX_test_accs": MLP_CC_aux.test_acc}
+            CC_AUX_outputs = {"CC_AUX_train_losses": {list_to_string(hidden_size): MLP_CC_aux.train_loss},
+                              "CC_AUX_test_losses": {list_to_string(hidden_size): MLP_CC_aux.test_loss},
+                              "CC_AUX_train_accs": {list_to_string(hidden_size): MLP_CC_aux.train_acc},
+                              "CC_AUX_test_accs": {list_to_string(hidden_size): MLP_CC_aux.test_acc}}
         report_from(CC_aux_run_output, model_cc_aux,
                     f"MLP_classifier_comparer_auxiliary_{hidden_size}")
 
@@ -178,10 +178,10 @@ def do_cnn_train_test_report(test_rounds=2,
                         writer_bool=tensorboard_output, verbose=verbose)
         # saving outputs in each test round
         CNN_run_output.append(CNN.run())
-        CNN_outputs = {"CNN_train_losses": CNN.train_loss,
-                       "CNN_test_losses": CNN.test_loss,
-                       "CNN_train_accs": CNN.train_acc,
-                       "CNN_test_accs": CNN.test_acc}
+        CNN_outputs = {"CNN_train_losses": {'CNN':CNN.train_loss},
+                       "CNN_test_losses": {'CNN': CNN.test_loss},
+                       "CNN_train_accs": {'CNN': CNN.train_acc},
+                       "CNN_test_accs": {'CNN': CNN.test_acc}}
     # reporting from the outputs saved
     report_from(CNN_run_output, model_CNN, f"CNN_VANILLA")
 
@@ -208,10 +208,10 @@ def do_cnn_train_test_report(test_rounds=2,
             writer_bool=tensorboard_output, verbose=verbose)
         # saving outputs in each test round
         CNN_CCrun_output.append(CC.run())
-        CNN_CCoutputs = {"CNN_CNN_CCtrain_losses": CC.train_loss,
-                         "CNN_CNN_CCtest_losses": CC.test_loss,
-                         "CNN_CNN_CCtrain_accs": CC.train_acc,
-                         "CNN_CNN_CCtest_accs": CC.test_acc}
+        CNN_CCoutputs = {"CNN_CNN_CCtrain_losses": {'CNN_CC': CC.train_loss},
+                         "CNN_CNN_CCtest_losses": {'CNN_CC': CC.test_loss},
+                         "CNN_CNN_CCtrain_accs": {'CNN_CC': CC.train_acc},
+                         "CNN_CNN_CCtest_accs": {'CNN_CC': CC.test_acc}}
     # reporting from the outputs saved
     report_from(CNN_CCrun_output, model_CNN_CC, f"CNN_classifier_comparer")
 
@@ -243,10 +243,10 @@ def do_cnn_train_test_report(test_rounds=2,
             weights=[0.6, 0.2, 0.2])
         # saving outputs in each test round
         CNN_CCAUX_run_output.append(CNN_CCAUX.run())
-        CNN_CCAUX_outputs = {"CNN_CCAUX_train_losses": CNN_CCAUX.train_loss,
-                             "CNN_CCAUX_test_losses": CNN_CCAUX.test_loss,
-                             "CNN_CCAUX_train_accs": CNN_CCAUX.train_acc,
-                             "CNN_CCAUX_test_accs": CNN_CCAUX.test_acc}
+        CNN_CCAUX_outputs = {"CNN_CCAUX_train_losses": {'CNN_AUX': CNN_CCAUX.train_loss},
+                             "CNN_CCAUX_test_losses": {'CNN_AUX': CNN_CCAUX.test_loss},
+                             "CNN_CCAUX_train_accs": {'CNN_AUX': CNN_CCAUX.train_acc},
+                             "CNN_CCAUX_test_accs": {'CNN_AUX': CNN_CCAUX.test_acc}}
     # reporting from the outputs saved
     report_from(CNN_CCAUX_run_output, model_CNN_CC_AUX,
                 f"CNN_classifier_comparer_auxiliary")

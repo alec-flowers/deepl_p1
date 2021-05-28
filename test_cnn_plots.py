@@ -1,3 +1,4 @@
+# importing packages and methods from other files in the module
 import os
 import torch
 from torch import nn
@@ -8,19 +9,26 @@ from utils import report_from, Verbosity, list_to_string,\
 import pickle
 
 
-# Verbosity: Full, Some, No to determine the amount of information dumped while training
+# Verbosity: Full, Some, No to determine the amount of information
+# dumped while training
 verbose = Verbosity.No
 
 
-# tensorboard_output is Boolean if True it makes Tensorboard output in which one can see the learning curves as well as schematic of the networks
-# while the test.py, you will be provided with a http address in the terminal simply copy that into your favorite browser and you can visualize the network and its training curves
+# tensorboard_output( Boolean) if set to  True it makes Tensorboard output
+# in which one  can see the learning curves as well as schematic of the networks
+# while the test.py, you will be provided with a link address in the terminal
+# simply copy that into your favorite browser and you can visualize the network
+# and its training curves
 tensorboard_output = False
 if tensorboard_output:
     # these shell commands get tensorboard up and running
     os.system('rm -rf ./runs >> /dev/null&')
     os.system('tensorboard --logdir=runs --bind_all &')
 
-########################### HYPER PARAMETERS ##################################
+
+###########################################################################
+########################### HYPER PARAMETERS ##############################
+###########################################################################
 test_rounds = 10
 lr = 1e-4
 batch_size = 100
@@ -28,8 +36,18 @@ num_epochs = 100
 layers = 3
 MLP_outputs = {}
 layer_widths = [300, 400, 600]
+###########################################################################
 
 
+##########################################################################
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#             Train, Test, and report on MLP architectures               #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+##########################################################################
 def do_mlp_train_test_report(hidden_size_list, epochs, filename):
     input_size_cc = 14 * 14  # MLP_RUNNER2
     input_size_mlp = 2 * 14 * 14  # MLP_RUNNER
@@ -132,6 +150,15 @@ def do_mlp_train_test_report(hidden_size_list, epochs, filename):
                     f"MLP_classifier_comparer_auxiliary_{hidden_size}")
 
 
+##########################################################################
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#             Train, Test, and report on CNN architectures               #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+##########################################################################
 def do_cnn_train_test_report(epochs, filename):
     input_size_CC = 14 * 14
 
@@ -237,9 +264,9 @@ def do_cnn_train_test_report(epochs, filename):
 
 if __name__ == '__main__':
     outputs = {}
-    filename = f"CNN_plots"
-    # outputs[str(num_epochs)] = \
-    #     do_cnn_train_test_report(num_epochs, filename)
+    filename = f"CNN_ARCHS"
+    outputs[str(num_epochs)] = \
+        do_cnn_train_test_report(num_epochs, filename)
 
     for layer_width in layer_widths:
         hidden_sizes_list = []
@@ -247,6 +274,3 @@ if __name__ == '__main__':
         hidden_sizes_list.append([layer_width] * (layers-1) + [196])
         MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list,
                                                        num_epochs, filename)
-    # plot_outputs_single_network_arch_from_list_cnn(
-    #     'CNN_Plots', outputs['100'],
-    #     'CNN Different Architectures', 'CNN', num_epochs)

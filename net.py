@@ -1,20 +1,11 @@
 import torch.nn as nn
-from torch.nn import functional as F
 import torch
-
-old_repr = torch.Tensor.__repr__
-
-def tensor_info(tensor):
-    return repr(tensor.shape)[6:] + ' ' + repr(tensor.dtype)[6:] + '@' + str(tensor.device) + '\n' + old_repr(tensor)
-torch.Tensor.__repr__ = tensor_info
-
 
 ##############################################################################
 #######################   VANILA PLAIN NETWORKS ##############################
 ##############################################################################
 
 class NeuralNet(nn.Module):
-    # Fully connected neural network with arbitrary hidden layers
     def __init__(self, input_size, hidden_sizes, output_size=1,
                  batchnorm_bool=False,
                  dropout_bool=False):
@@ -24,8 +15,8 @@ class NeuralNet(nn.Module):
         :param input_size:                  The size of the input for forward parse
         :param hidden_sizes:                List of sizes of hidden fully connected layers
         :param output_size:                 The size of the output of the NN
-        :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not
-        :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not
+        :param batchnorm_bool :             Boolean determining whether \acitivating Batch normalization or not
+        :param dropout_bool :               Boolean determining whether acitivating dropout or not
         """
         super(NeuralNet, self).__init__()
         self.input_size = input_size
@@ -45,9 +36,7 @@ class NeuralNet(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass
-
-        param x: The input of the NN 2*14*14
+        :param x: The input of the NN 2*14*14
         """
         for i, (layer, relu, bn, dp) in enumerate(zip(self.layers,
                                                       self.relus,
@@ -64,7 +53,12 @@ class NeuralNet(nn.Module):
         return out
 
 
-class ConvNet2(nn.Module):
+class ConvNet_LeCun(nn.Module):
+    '''
+    Conv Net inspired by Lecun 1998 paper and design.
+    Uses structure of first applying convolutions for feature extraction then running through fully
+    connected layers for classification.
+    '''
     def __init__(self):
         super().__init__()
         self.features = nn.Sequential(
@@ -92,14 +86,11 @@ class ConvNet2(nn.Module):
         x = self.classifier(x)
         return x
 
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(-1, 17152)
-        x = self.classifier(x)
-        return x
 
-
-class ConvNet3(nn.Module):
+class ConvNet_LeCun_Update(nn.Module):
+    '''
+    Added BatchNormalization and dropout to the Le_Cun network to try and fix overfitting.
+    '''
     def __init__(self):
         super().__init__()
         self.features = nn.Sequential(
@@ -134,7 +125,11 @@ class ConvNet3(nn.Module):
         return x
 
 
-class ConvNet4(nn.Module):
+class ConvNet_VGG(nn.Module):
+    '''
+    Conv net inspired by VGG with two back to back Convolutions followed by BatchNorm, MaxPooling, and dropout. This is
+    the network used in our paper.
+    '''
     def __init__(self):
         super().__init__()
         self.features = nn.Sequential(
@@ -173,12 +168,11 @@ class ConvNet4(nn.Module):
         return x
 
 ##############################################################################
-###########################  specialized classifier networks  ################
+###########################  Specialized Classifier Networks  ################
 ##############################################################################
 
 
 class NeuralNetCalssifier(nn.Module):
-    # Fully connected neural network
     def __init__(self, input_size, hidden_sizes,
                  num_labels=10,
                  batchnorm_classifer_bool=False,
@@ -208,11 +202,11 @@ class NeuralNetCalssifier(nn.Module):
         self.dropout_calssifier_bool = dropout_classifier_bool
 
     def forward(self, x1, x2):
-        """
-        Forward pass
-
-        param x: The input of the NN 2, 14*14
-        """
+        '''
+        :param x1:      First image
+        :param x2:      Second image
+        :return:        Concatenated output of first then second image
+        '''
         for i, (layer, relu, bn, dp) in enumerate(zip(self.layers_classifier,
                                                       self.relus_classifier,
                                                       self.bns_classifier,
@@ -232,8 +226,10 @@ class NeuralNetCalssifier(nn.Module):
 
 
 class CNNClassifier(nn.Module):
-    # Fully connected neural network with one hidden layer
-    # With two submodules: 1. classifier 2. comparer
+    '''
+    Constructor for a CNN working as the classifier sub-module. Same structure as ConvNet_VGG but with softmax instead
+    of sigmoid because we are using this for multi-class classification.
+    '''
     def __init__(self):
         super(CNNClassifier, self).__init__()
         self.features = nn.Sequential(
@@ -266,6 +262,11 @@ class CNNClassifier(nn.Module):
         )
 
     def forward(self, x1, x2):
+        '''
+        :param x1:      First Image
+        :param x2:      Second Image
+        :return:        Concatenated output of first then second image
+        '''
         x1 = self.features(x1.unsqueeze(dim=1))
         x2 = self.features(x2.unsqueeze(dim=1))
         x1 = x1.view(-1, 576)
@@ -276,12 +277,10 @@ class CNNClassifier(nn.Module):
 
 
 ##############################################################################
-######################  specialized comparer networks  #######################
+######################  Specialized Comparer Networks  #######################
 ##############################################################################
 
 class NeuralNetComparer(nn.Module):
-    # Fully connected neural network with one hidden layer
-    # With two submodules: 1. classifier 2. comparer
     def __init__(self, input_size, hidden_sizes,
                  num_labels=10, output_size=1,
                  batchnorm_comparer_bool=False,
@@ -294,7 +293,6 @@ class NeuralNetComparer(nn.Module):
         :param num_labels:                  The size of the output of classifier sub-module
         :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
         :param dropout_comparer_bool :      Boolean determining whether acitivating dropout or not for comparer sublayer
-
         """
         super(NeuralNetComparer, self).__init__()
         sizes = [2 * num_labels] + hidden_sizes + [output_size]
@@ -312,11 +310,11 @@ class NeuralNetComparer(nn.Module):
         self.dropout_comparer_bool = dropout_comparer_bool
 
     def forward(self, x):
-        """
-        Forward pass
-
-        param x: The input of the NN size: 20
-        """
+        '''
+        :param x:   Input from the classifier sub-networks. Used to then run through this network and make final
+                    prediction.
+        :return:    Final prediction as probability.
+        '''
         inp = x
         for i, (layer, relu, bn, dp) in enumerate(zip(self.layers_comparer,
                                                       self.relus_comparer,
@@ -334,17 +332,15 @@ class NeuralNetComparer(nn.Module):
 
 
 ##############################################################################
-###########################  Classifier-comaprer networks ####################
+###########################  Classifier-Comparer Networks ####################
 ##############################################################################
 
 
 class NeuralNetCalssifierComparer(nn.Module):
-    # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer
     def __init__(self, input_size,
-                 hidden_sizes_classifier, hidden_sizes_comparer,
-                 num_labels=10, output_size=1,
-                 aux_loss=False,
+                 hidden_sizes_classifier,
+                 hidden_sizes_comparer,
                  batchnorm_classifer_bool=False,
                  dropout_classifier_bool=False,
                  batchnorm_comparer_bool=False,
@@ -354,9 +350,8 @@ class NeuralNetCalssifierComparer(nn.Module):
         1. Classifier 2.Comparer
 
         :param input_size:                  The size of the input for forward parse
-        :param hidden_sizes:                List of sizes of hidden fully connected layers for classifier sub-module
+        :param hidden_sizes_classifier:     List of sizes of hidden fully connected layers for classifier sub-module
         :param hidden_sizes_comparer:       List of sizes of hidden fully connected layers for comparer sub-module
-        :param num_labels:                  The size of the output of classifier sub-module
         :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not for classifier sub-module
         :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not for classifier sub-module
         :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
@@ -377,33 +372,27 @@ class NeuralNetCalssifierComparer(nn.Module):
             dropout_comparer_bool=dropout_comparer_bool)
 
     def forward(self, x):
-        """
-        Forward pass
-
-        param x: The input of the NN, size: 2, 14*14
-        """
+        '''
+        :param x:       Two images of size 2x14x14
+        :return:        Prediction
+        '''
         tgts, _ = self.comparer(self.classifier(x[:, 0, ...],
                                                 x[:, 1, ...]))
         return tgts
 
 
 class CNNCalssifierComparer(nn.Module):
-    # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer
     def __init__(self, input_size,
                  hidden_sizes_comparer,
                  batchnorm_comparer_bool=False,
                  dropout_comparer_bool=False):
         """
-        Constructor for a NN with two sub Module
+        Constructor for a CNN with two sub Module
         1. Classifier 2.Comparer
 
         :param input_size:                  The size of the input for forward parse
-        :param hidden_sizes:                List of sizes of hidden fully connected layers for classifier sub-module
         :param hidden_sizes_comparer:       List of sizes of hidden fully connected layers for comparer sub-module
-        :param num_labels:                  The size of the output of classifier sub-module
-        :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not for classifier sub-module
-        :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not for classifier sub-module
         :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
         :param dropout_comparer_bool :      Boolean determining whether acitivating dropout or not for comparer sublayer
 
@@ -418,26 +407,25 @@ class CNNCalssifierComparer(nn.Module):
             dropout_comparer_bool=dropout_comparer_bool)
 
     def forward(self, x):
-        """
-        Forward pass
-
-        param x: The input of the NN, size: 2, 14*14
-        """
+        '''
+        :param x:       Two images of size 2x14x14
+        :return:        Prediction
+        '''
         tgts, _ = self.comparer(self.classifier(x[:, 0, ...],
                                                 x[:, 1, ...]))
         return tgts
 
 
 ##############################################################################
-############ Classifier-comaprer with auxiliary loss networks ################
+############ Classifier-Comaprer With Auxiliary Loss Networks ################
 ##############################################################################
+
 class NeuralNetCalssifierComparerAuxLoss(nn.Module):
-    # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer with auxiliary loss
     def __init__(self, input_size,
-                 hidden_sizes_classifier, hidden_sizes_comparer,
-                 num_labels=10, output_size=1,
-                 aux_loss=False,
+                 hidden_sizes_classifier,
+                 hidden_sizes_comparer,
+                 num_labels=10,
                  batchnorm_classifer_bool=False,
                  dropout_classifier_bool=False,
                  batchnorm_comparer_bool=False,
@@ -447,10 +435,9 @@ class NeuralNetCalssifierComparerAuxLoss(nn.Module):
         1. Classifier 2.Comparer
 
         :param input_size:                  The size of the input for forward parse
-        :param hidden_sizes:                List of sizes of hidden fully connected layers for classifier sub-module
+        :param hidden_sizes_classifier:                List of sizes of hidden fully connected layers for classifier sub-module
         :param hidden_sizes_comparer:       List of sizes of hidden fully connected layers for comparer sub-module
         :param num_labels:                  The size of the output of classifier sub-module
-        :param aux loss:                    Boolean Determining whether or not cosnidering auxiliary loss
         :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not for classifier sub-module
         :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not for classifier sub-module
         :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
@@ -470,28 +457,23 @@ class NeuralNetCalssifierComparerAuxLoss(nn.Module):
             batchnorm_comparer_bool=batchnorm_comparer_bool,
             dropout_comparer_bool=dropout_comparer_bool)
 
-        self.aux_loss = aux_loss
         self.num_labels = num_labels
 
     def forward(self, x):
-        """
-        Forward pass
-
-        param x: The input of the NN size: 2, 14*14
-        """
+        '''
+        :param x:       Two images of size 2x14x14
+        :return:        Prediction of boolean, label1, label2
+        '''
         tgts, labels = self.comparer(self.classifier(x[:, 0, ...],
                                                      x[:, 1, ...]))
         return tgts, labels[:, :self.num_labels], labels[:, self.num_labels:]
 
 
 class CNNCalssifierComparerAuxLoss(nn.Module):
-    # Fully connected neural network with one hidden layer
     # With two submodules: 1. classifier 2. comparer with auxiliary loss
-    def __init__(self, input_size, hidden_sizes_comparer,
-                 num_labels=10, output_size=1,
-                 aux_loss=False,
-                 batchnorm_classifer_bool=False,
-                 dropout_classifier_bool=False,
+    def __init__(self, input_size,
+                 hidden_sizes_comparer,
+                 num_labels=10,
                  batchnorm_comparer_bool=False,
                  dropout_comparer_bool=False):
         """
@@ -499,12 +481,8 @@ class CNNCalssifierComparerAuxLoss(nn.Module):
         1. Classifier 2.Comparer
 
         :param input_size:                  The size of the input for forward parse
-        :param hidden_sizes:                List of sizes of hidden fully connected layers for classifier sub-module
         :param hidden_sizes_comparer:       List of sizes of hidden fully connected layers for comparer sub-module
         :param num_labels:                  The size of the output of classifier sub-module
-        :param aux loss:                    Boolean Determining whether or not cosnidering auxiliary loss
-        :param batchnorm_classifer_bool :   Boolean determining whether \acitivating Batch normalization or not for classifier sub-module
-        :param dropout_classifer_bool :     Boolean determining whether acitivating dropout or not for classifier sub-module
         :param batchnorm_comparer_bool :    Boolean determining whether acitivating Batch normalization or not for comparer sub-module
         :param dropout_comparer_bool :      Boolean determining whether acitivating dropout or not for comparer sublayer
 
@@ -518,15 +496,13 @@ class CNNCalssifierComparerAuxLoss(nn.Module):
             batchnorm_comparer_bool=batchnorm_comparer_bool,
             dropout_comparer_bool=dropout_comparer_bool)
 
-        self.aux_loss = aux_loss
         self.num_labels = num_labels
 
     def forward(self, x):
-        """
-        Forward pass
-
-        param x: The input of the NN size: 2, 14*14
-        """
+        '''
+        :param x:       Two images of size 2x14x14
+        :return:        Prediction of boolean, label1, label2
+        '''
         tgts, labels = self.comparer(self.classifier(x[:, 0, ...],
                                                      x[:, 1, ...]))
         return tgts, labels[:, :self.num_labels], labels[:, self.num_labels:]

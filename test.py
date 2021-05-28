@@ -40,7 +40,7 @@ def do_mlp_train_test_report(hidden_sizes_list,
                              test_rounds=2,
                              lr=1e-4,
                              batch_size=100,
-                             epochs=10,
+                             epochs=50,
                              hidden_sizes_comparer=[80, 80, 20]):
     input_size_cc = 14 * 14
     input_size_mlp = 2 * 14 * 14
@@ -159,7 +159,7 @@ def do_mlp_train_test_report(hidden_sizes_list,
 def do_cnn_train_test_report(test_rounds=2,
                              lr=1e-4,
                              batch_size=100,
-                             epochs=10,
+                             epochs=50,
                              hidden_sizes_comparer=[80, 80, 20]):
     input_size_CC = 14 * 14
 

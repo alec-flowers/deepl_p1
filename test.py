@@ -5,8 +5,14 @@ from torch import nn
 from runner import *
 from net import *
 from utils import report_from, Verbosity, list_to_string,\
+    plot_outputs_single_network_arch_from_list_cnn,\
     plot_outputs_single_network_arch_from_list_cnn
-import pickle
+
+try:
+    from torch.utils.tensorboard import SummaryWriter
+    tensorborad_found = True
+except:
+    tensorborad_found = False
 
 
 # Verbosity: Full, Some, No to determine the amount of information
@@ -19,8 +25,8 @@ verbose = Verbosity.No
 # while the test.py, you will be provided with a link address in the terminal
 # simply copy that into your favorite browser and you can visualize the network
 # and its training curves
-tensorboard_output = False
-if tensorboard_output:
+tensorboard_output = True
+if tensorboard_output and tensorborad_found:
     # these shell commands get tensorboard up and running
     os.system('rm -rf ./runs >> /dev/null&')
     os.system('tensorboard --logdir=runs --bind_all &')

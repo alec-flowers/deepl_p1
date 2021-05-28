@@ -3,7 +3,12 @@ from data import load_data
 import torch
 from utils import DummySummaryWriter, Verbosity
 from torch import nn
-from torch.utils.tensorboard import SummaryWriter
+
+try:
+    from torch.utils.tensorboard import SummaryWriter
+    tensorborad_found = True
+except:
+    tensorborad_found = False
 
 
 class BaseRunner(abc.ABC):
@@ -33,7 +38,7 @@ class BaseRunner(abc.ABC):
         self.weights = weights
         self.writer_bool = writer_bool
         self.verbose = verbose
-        if writer_bool:
+        if writer_bool and tensorborad_found:
             self.writer = SummaryWriter('runs/'+self.name)
 
         self.train_loss = []
@@ -48,7 +53,7 @@ class BaseRunner(abc.ABC):
             self.current_epoch += 1
         if self.verbose == Verbosity.Some or self.verbose == Verbosity.Full:
             self.report()
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             self.graph_plot()
         return (self.train_loss[-1], self.test_loss[-1],
                 self.train_acc[-1], self.test_acc[-1])
@@ -74,7 +79,7 @@ class BaseRunner(abc.ABC):
         for i, (inps, [tgts, classes]) in enumerate(self.train_loader):
             # Change size of inputs/labels
             inps, tgts = self.rescale_inputs(inps, tgts)
-            inps =inps.to(self.device)
+            inps = inps.to(self.device)
             # Forward pass
             forward_outputs = self.model(inps)
 
@@ -99,7 +104,7 @@ class BaseRunner(abc.ABC):
                 f"Epoch: {self.current_epoch}" +
                 f"  TRAIN Loss: {self.train_loss[self.current_epoch]:.04f}" +
                 f"  TRAIN Accuracy: {self.train_acc[self.current_epoch]:.04f}")
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             self.writer.add_scalar("Loss/Train",
                                    self.train_loss[self.current_epoch],
                                    self.current_epoch)
@@ -137,7 +142,7 @@ class BaseRunner(abc.ABC):
                 print(
                     f" TEST Loss: {self.test_loss[self.current_epoch]:.04f}" +
                     f" TEST Accuracy: {self.test_acc[self.current_epoch]:.04f}")
-            if self.writer_bool:
+            if self.writer_bool and tensorborad_found:
                 self.writer.add_scalar("Loss/Test",
                                        self.test_loss[self.current_epoch],
                                        self.current_epoch)
@@ -210,7 +215,7 @@ class MLPRunner(BaseRunner):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
 
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             with SummaryWriter(comment='plain mlp') as w:
                 self.writer.add_graph(
                     self.model,
@@ -239,7 +244,7 @@ class MLPClassifierComparerRunner(BaseRunner):
     def graph_plot(self):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             with SummaryWriter(comment='classifier_comparer') as w:
                 self.writer.add_graph(
                     self.model,
@@ -282,11 +287,12 @@ class MLPClassifierComparerRunnerAux(BaseRunner):
     def graph_plot(self):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             with SummaryWriter(comment='classifier_comparer') as w:
                 self.writer.add_graph(
                     self.model,
                     example_data.reshape(-1, 2, 14 * 14).to(self.device))
+
 
 class CNNClassifierComparerRunnerAux(BaseRunner):
     def __init__(self, model, criterion, optimizer,
@@ -323,7 +329,7 @@ class CNNClassifierComparerRunnerAux(BaseRunner):
     def graph_plot(self):
         examples = iter(self.train_loader)
         example_data, example_targets = examples.next()
-        if self.writer_bool:
+        if self.writer_bool and tensorborad_found:
             with SummaryWriter(comment='classifier_comparer') as w:
                 self.writer.add_graph(
                     self.model,

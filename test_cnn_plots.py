@@ -32,9 +32,8 @@ if tensorboard_output:
 test_rounds = 10
 lr = 1e-4
 batch_size = 100
-num_epochs = 100
+num_epochs = 10
 layers = 3
-MLP_outputs = {}
 layer_widths = [300, 400, 600]
 ###########################################################################
 
@@ -49,8 +48,8 @@ layer_widths = [300, 400, 600]
 #                                                                        #
 ##########################################################################
 def do_mlp_train_test_report(hidden_size_list, epochs, filename):
-    input_size_cc = 14 * 14  # MLP_RUNNER2
-    input_size_mlp = 2 * 14 * 14  # MLP_RUNNER
+    input_size_cc = 14 * 14
+    input_size_mlp = 2 * 14 * 14
     ###########################################################################
     ####################### PLAIN MLP NETWORK #################################
     ###########################################################################
@@ -169,7 +168,7 @@ def do_cnn_train_test_report(epochs, filename):
     CNN_run_output = []
     for i in range(test_rounds):
         # creating the network
-        model_CNN = ConvNet4()
+        model_CNN = ConvNet_VGG()
         # creating the optimizer
         optimizer_CNN = torch.optim.Adam(model_CNN.parameters(), lr=lr)
         # creating loss criterion
@@ -263,6 +262,16 @@ def do_cnn_train_test_report(epochs, filename):
 
 
 if __name__ == '__main__':
+    # calling MLP architectures' train, test, and report
+    MLP_outpurs={}
+    for layer_width in layer_widths:
+        hidden_sizes_list = []
+        filename = f"MLP_{layers}_LAYER_ARCHS"
+        hidden_sizes_list.append([layer_width] * (layers-1) + [196])
+        MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list,
+                                                       num_epochs, filename)
+
+    # calling CNN architectures' train, test, and report
     outputs = {}
     filename = f"CNN_ARCHS"
     outputs[str(num_epochs)] = \

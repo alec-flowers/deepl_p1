@@ -31,7 +31,6 @@ if __name__ == '__main__':
             f"MLP Neural Networks Different Architectures with {layer_width+1} Hidden Layers",
             " 196_", epochs, list_arch_for_plot)
 
-    epochs = 50
     outputs = {}
     outputs[str(epochs)] = \
         do_cnn_train_test_report(epochs=epochs)

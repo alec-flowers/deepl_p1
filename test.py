@@ -27,20 +27,6 @@ if tensorboard_output and tensorborad_found:
     os.system('rm -rf ./runs >> /dev/null&')
     os.system('tensorboard --logdir=runs --bind_all &')
 
-
-###########################################################################
-########################### HYPER PARAMETERS ##############################
-###########################################################################
-test_rounds = 2
-lr = 1e-4
-batch_size = 100
-num_epochs = 10
-layers = 3  # number of hidden layers for MLPs
-layer_widths = [300, 400, 600]  # width of fully connected layers for MLPs
-hidden_sizes_comparer = [80, 80, 20]  # the size of hidden layers of compararer
-###########################################################################
-
-
 ##########################################################################
 #                                                                        #
 #                                                                        #
@@ -50,7 +36,12 @@ hidden_sizes_comparer = [80, 80, 20]  # the size of hidden layers of compararer
 #                                                                        #
 #                                                                        #
 ##########################################################################
-def do_mlp_train_test_report(hidden_size_list, epochs, filename):
+def do_mlp_train_test_report(hidden_sizes_list,
+                             test_rounds=2,
+                             lr=1e-4,
+                             batch_size=100,
+                             epochs=10,
+                             hidden_sizes_comparer=[80, 80, 20]):
     input_size_cc = 14 * 14
     input_size_mlp = 2 * 14 * 14
     ###########################################################################
@@ -160,7 +151,11 @@ def do_mlp_train_test_report(hidden_size_list, epochs, filename):
 #                                                                        #
 #                                                                        #
 ##########################################################################
-def do_cnn_train_test_report(epochs, filename):
+def do_cnn_train_test_report(test_rounds=2,
+                             lr=1e-4,
+                             batch_size=100,
+                             epochs=10,
+                             hidden_sizes_comparer=[80, 80, 20]):
     input_size_CC = 14 * 14
 
     ######################################################################
@@ -265,16 +260,17 @@ def do_cnn_train_test_report(epochs, filename):
 
 if __name__ == '__main__':
     # calling MLP architectures' train, test, and report
+    layers = 3
+    layer_widths = [300, 400, 600]
+    epochs = 10
+
     MLP_outputs = {}
     for layer_width in layer_widths:
         hidden_sizes_list = []
-        filename = f"MLP_{layers}_LAYER_ARCHS"
         hidden_sizes_list.append([layer_width] * (layers-1) + [196])
-        MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list,
-                                                       num_epochs, filename)
+        MLP_outputs[layers] = do_mlp_train_test_report(hidden_sizes_list=hidden_sizes_list, epochs=epochs)
 
     # calling CNN architectures' train, test, and report
     outputs = {}
-    filename = f"CNN_ARCHS"
-    outputs[str(num_epochs)] = \
-        do_cnn_train_test_report(num_epochs, filename)
+    outputs[str(epochs)] = \
+        do_cnn_train_test_report(epochs=epochs)
